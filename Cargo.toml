@@ -1,6 +1,6 @@
 [package]
 name = "qbit"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "A wrapper for qBittorrent Web API"
 keywords = ["qbit", "qbittorrent", "api", "torrent", "bittorrent"]
