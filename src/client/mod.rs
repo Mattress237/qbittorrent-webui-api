@@ -8,6 +8,7 @@ use crate::error::Error;
 mod application;
 mod authentication;
 mod log;
+mod rss;
 mod sync;
 mod torrent;
 mod transfer;
