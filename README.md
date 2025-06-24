@@ -97,13 +97,13 @@ Supported Qbittorrent version: `5.0`
 
 ### RSS (experimental)
 
-- [ ] Add folder
-- [ ] Add feed
-- [ ] Remove item
-- [ ] Move item
-- [ ] Get all items
-- [ ] Mark as read
-- [ ] Refresh item
+- [x] Add folder
+- [x] Add feed
+- [x] Remove item
+- [x] Move item
+- [x] Get all items
+- [x] Mark as read
+- [x] Refresh item
 - [ ] Set auto-downloading rule
 - [ ] Rename auto-downloading rule
 - [ ] Remove auto-downloading rule
