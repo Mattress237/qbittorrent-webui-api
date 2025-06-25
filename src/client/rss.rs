@@ -33,9 +33,11 @@ impl super::Api {
         let url = self._build_url("api/v2/rss/addFeed").await?;
 
         let mut form = multipart::Form::new();
-        form = form.text("feed_url", feed_url.to_string());
+        form = form.text("url", feed_url.to_string());
         if let Some(path) = path {
             form = form.text("path", path.to_string());
+        } else {
+            form = form.text("path", "".to_string());
         }
 
         self.http_client.post(url).multipart(form).send().await?;
@@ -207,11 +209,11 @@ impl super::Api {
         Ok(rules)
     }
 
-    /// Get all RSS rules articals
+    /// Get all RSS rules articles
     ///
     /// # Arguments
     /// * `name` - Rule name (e.g. "Linux")
-    pub async fn rss_rules_articals(
+    pub async fn rss_rules_articles(
         &self,
         name: &str,
     ) -> Result<HashMap<String, Vec<String>>, Error> {
