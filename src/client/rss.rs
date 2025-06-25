@@ -12,7 +12,7 @@ impl super::Api {
     ///
     /// # Arguments
     ///
-    /// * `path` - Full path of added folder (e.g. "The Pirate Bay\Top100")
+    /// * `path` - Full path of added folder. Use `\\` insted of `/` as the delimiter. (e.g. "The Pirate Bay\\Top100")
     pub async fn rss_add_folder(&self, path: &str) -> Result<(), Error> {
         let url = self._build_url("api/v2/rss/addFolder").await?;
 
@@ -28,7 +28,7 @@ impl super::Api {
     ///
     /// # Arguments
     /// * `feed_url` - URL of RSS feed (e.g. "http://thepiratebay.org/rss//top100/200")
-    /// * `path` - Full path of added folder (e.g. "The Pirate Bay\Top100")
+    /// * `path` - Full path of added feed. Use `\\` insted of `/` as the delimiter. (e.g. "The Pirate Bay\\Top100")
     pub async fn rss_add_feed(&self, feed_url: &str, path: Option<&str>) -> Result<(), Error> {
         let url = self._build_url("api/v2/rss/addFeed").await?;
 
@@ -48,7 +48,7 @@ impl super::Api {
     /// Removes folder or feed.
     ///
     /// # Arguments
-    /// * `path` - Full path of removed item (e.g. "The Pirate Bay\Top100")
+    /// * `path` - Full path of removed item. Use `\\` insted of `/` as the delimiter. (e.g. "The Pirate Bay\\Top100")
     pub async fn rss_remove_item(&self, path: &str) -> Result<(), Error> {
         let url = self._build_url("api/v2/rss/removeItem").await?;
 
@@ -65,8 +65,8 @@ impl super::Api {
     /// Moves/renames folder or feed.
     ///
     /// # Arguments
-    /// * `item_path` - Current full path of item (e.g. "The Pirate Bay\Top100")
-    /// * `dest_path` - New full path of item (e.g. "The Pirate Bay")
+    /// * `item_path` - Current full path of item. Use `\\` insted of `/` as the delimiter. (e.g. "The Pirate Bay\\Top100")
+    /// * `dest_path` - New full path of item. Use `\\` insted of `/` as the delimiter. (e.g. "The Pirate Bay")
     pub async fn rss_move_item(&self, item_path: &str, dest_path: &str) -> Result<(), Error> {
         let url = self._build_url("api/v2/rss/moveItem").await?;
 
@@ -110,7 +110,7 @@ impl super::Api {
     /// feed is going to be marked as read.
     ///
     /// # Arguments
-    /// * `path` - Current full path of item (e.g. "The Pirate Bay\Top100")
+    /// * `path` - Current full path of item. Use `\\` insted of `/` as the delimiter. (e.g. "The Pirate Bay\\Top100")
     /// * `article_id` - ID of article
     pub async fn rss_mark_as_read(&self, path: &str, article_id: Option<u64>) -> Result<(), Error> {
         let url = self._build_url("api/v2/rss/moveItem").await?;
@@ -131,7 +131,7 @@ impl super::Api {
     /// Refreshes folder or feed.
     ///
     /// # Arguments
-    /// * `item_path` - Current full path of item (e.g. "The Pirate Bay\Top100")
+    /// * `item_path` - Current full path of item. Use `\\` insted of `/` as the delimiter. (e.g. "The Pirate Bay\\Top100")
     pub async fn rss_refresh_item(&self, item_path: &str) -> Result<(), Error> {
         let url = self._build_url("api/v2/rss/refreshItem").await?;
 
