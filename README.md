@@ -104,11 +104,11 @@ Supported Qbittorrent version: `5.0`
 - [x] Get all items
 - [x] Mark as read
 - [x] Refresh item
-- [ ] Set auto-downloading rule
-- [ ] Rename auto-downloading rule
-- [ ] Remove auto-downloading rule
-- [ ] Get all auto-downloading rules
-- [ ] Get all articles matching a rule
+- [x] Set auto-downloading rule
+- [x] Rename auto-downloading rule
+- [x] Remove auto-downloading rule
+- [x] Get all auto-downloading rules
+- [x] Get all articles matching a rule
 
 ### Search
 

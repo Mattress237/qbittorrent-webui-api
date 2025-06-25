@@ -1,6 +1,11 @@
+use std::collections::HashMap;
+
 use reqwest::multipart;
 
-use crate::{error::Error, models::RssFeedCollection};
+use crate::{
+    error::Error,
+    models::{RssFeedCollection, RssRule},
+};
 
 impl super::Api {
     /// Add RSS folder
@@ -136,5 +141,94 @@ impl super::Api {
         self.http_client.post(url).multipart(form).send().await?;
 
         Ok(())
+    }
+
+    /// Set RSS rule
+    ///
+    /// # Arguments
+    /// * `name` - Rule name (e.g. "Punisher")
+    /// * `def` - rule definition
+    pub async fn rss_set_rule(&self, name: &str, def: RssRule) -> Result<(), Error> {
+        let url = self._build_url("api/v2/rss/setRule").await?;
+
+        let mut form = multipart::Form::new();
+        form = form.text("ruleName", name.to_string());
+        form = form.text("ruleDef", serde_json::to_string(&def)?);
+
+        self.http_client.post(url).multipart(form).send().await?;
+
+        Ok(())
+    }
+
+    /// Rename RSS rule
+    ///
+    /// # Arguments
+    /// * `name` - Rule name (e.g. "Punisher")
+    /// * `new_name` - New rule name (e.g. "The Punisher")
+    pub async fn rss_rename_rule(&self, name: &str, new_name: &str) -> Result<(), Error> {
+        let url = self._build_url("api/v2/rss/renameRule").await?;
+
+        let mut form = multipart::Form::new();
+        form = form.text("ruleName", name.to_string());
+        form = form.text("newRuleName", new_name.to_string());
+
+        self.http_client.post(url).multipart(form).send().await?;
+
+        Ok(())
+    }
+
+    /// Remove RSS rule
+    ///
+    /// # Arguments
+    /// * `name` - Rule name (e.g. "Punisher")
+    pub async fn rss_remove_rule(&self, name: &str) -> Result<(), Error> {
+        let url = self._build_url("api/v2/rss/removeRule").await?;
+
+        let mut form = multipart::Form::new();
+        form = form.text("ruleName", name.to_string());
+
+        self.http_client.post(url).multipart(form).send().await?;
+
+        Ok(())
+    }
+
+    /// Get all RSS rules
+    pub async fn rss_rules(&self) -> Result<HashMap<String, RssRule>, Error> {
+        let url = self._build_url("api/v2/rss/rules").await?;
+
+        let rules = self
+            .http_client
+            .get(url)
+            .send()
+            .await?
+            .json::<HashMap<String, RssRule>>()
+            .await?;
+
+        Ok(rules)
+    }
+
+    /// Get all RSS rules articals
+    ///
+    /// # Arguments
+    /// * `name` - Rule name (e.g. "Linux")
+    pub async fn rss_rules_articals(
+        &self,
+        name: &str,
+    ) -> Result<HashMap<String, Vec<String>>, Error> {
+        let mut url = self._build_url("api/v2/rss/matchingArticles").await?;
+
+        let mut query = url.query_pairs_mut();
+        query.append_pair("ruleName", &name);
+        drop(query);
+
+        let articles = self
+            .http_client
+            .get(url)
+            .send()
+            .await?
+            .json::<HashMap<String, Vec<String>>>()
+            .await?;
+
+        Ok(articles)
     }
 }
