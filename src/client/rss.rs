@@ -88,7 +88,10 @@ impl super::Api {
     /// * `withData` - True if you need current feed articles
     ///
     /// TODO: Need to test a bit later on what `with_data` do!?
-    pub async fn rss_items(&self, with_data: bool) -> Result<RssFeedCollection, Error> {
+    pub async fn rss_items(
+        &self,
+        with_data: bool,
+    ) -> Result<HashMap<String, RssFeedCollection>, Error> {
         let mut url = self._build_url("api/v2/rss/items").await?;
 
         let mut query = url.query_pairs_mut();
@@ -100,7 +103,7 @@ impl super::Api {
             .get(url)
             .send()
             .await?
-            .json::<RssFeedCollection>()
+            .json::<HashMap<String, RssFeedCollection>>()
             .await?;
 
         Ok(feed)
