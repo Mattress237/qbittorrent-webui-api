@@ -87,7 +87,10 @@ impl super::Api {
     ///
     /// * `withData` - True if you need current feed articles
     ///
-    /// TODO: Need to test a bit later on what `with_data` do!?
+    /// # Returns
+    /// A `HashMap` where the keys are feed names and the values are `RssFeedCollection` objects.
+    /// The `RssFeedCollection` contains detailed information about each RSS feed, including its
+    /// articles if `withData` is set to true. `RssFeedCollection` can have nested `RssFeedCollection`
     pub async fn rss_items(
         &self,
         with_data: bool,
