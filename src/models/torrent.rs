@@ -38,8 +38,11 @@ pub struct TorrentInfo {
     pub hash: Option<String>,
     /// True if torrent is from a private tracker (added in 5.0.0)
     ///
-    /// NOTE: Documetaion is wrong field name is "private" not "isPrivate"
-    pub private: bool,
+    /// The value will be `None` if the torrent metadata is not available yet.
+    /// See issue [#10](https://github.com/Mattress237/qbittorrent-webui-api/issues/10)
+    ///
+    /// NOTE: Documentation is incorrect. The field name is "private", not "isPrivate".
+    pub private: Option<bool>,
     /// Last time (Unix Epoch) when a chunk was downloaded/uploaded
     pub last_activity: i64,
     /// Magnet URI corresponding to this torrent
@@ -171,8 +174,11 @@ pub struct TorrentProperties {
     pub up_speed_avg: i64,
     /// Torrent upload speed (bytes/second)
     pub up_speed: i64,
-    /// True if torrent is from a private tracker
-    pub private: bool,
+    /// True if torrent is from a private tracker (added in 5.0.0)
+    ///
+    /// The value will be `null` if the torrent metadata is not available yet.
+    /// See issue [#10](https://github.com/Mattress237/qbittorrent-webui-api/issues/10)
+    pub private: Option<bool>,
 }
 
 /// Torrent tracker data object
