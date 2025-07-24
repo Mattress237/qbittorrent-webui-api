@@ -1,8 +1,5 @@
 use dotenv::dotenv;
-use qbit::{
-    Api,
-    parameters::{AddTorrent, AddTorrentType},
-};
+use qbit::{Api, parameters::AddTorrentBuilder};
 use std::env;
 
 pub mod authentication;
@@ -43,13 +40,15 @@ pub async fn login_default_client() -> Api {
         &get_server_password(),
     )
     .await
-    .expect("Failed to log in to the default client. Please check the server details, username, and password. : ")
+    .expect("Failed to log in to the default client. Please check the server details, username, and password.")
 }
 
 pub async fn add_debian_torrent(client: &Api) {
-    let mut param = AddTorrent::new();
-    param.torrents = AddTorrentType::Links(vec![DEBIAN_TRACKER.to_string()]);
-    param.paused = true;
+    let param = AddTorrentBuilder::default()
+        .torrents(vec![DEBIAN_TRACKER.to_string()])
+        .paused(true)
+        .build()
+        .expect("Failed to build AddTorrent");
 
     client
         .add_torrent(param)

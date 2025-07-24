@@ -1,28 +1,37 @@
+use derive_builder::Builder;
 use std::fmt::Display;
 
 /// Torrent List/info parameter object
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Builder)]
 pub struct TorrentListParams {
     /// Filter torrent list by state. Allowed state filters: TorrentState
+    #[builder(setter(strip_option), default)]
     pub filter: Option<TorrentState>,
     /// Get torrents with the given category (empty string means "without category"; no "category" parameter means "any category"). Remember to URL-encode the category name. For example, `My category` becomes `My%20category`
+    #[builder(setter(into, strip_option), default)]
     pub category: Option<String>,
     /// Get torrents with the given tag (empty string means "without tag"; no "tag" parameter means "any tag". Remember to URL-encode the category name. For example, `My tag` becomes `My%20tag`
+    #[builder(setter(into, strip_option), default)]
     pub tag: Option<String>,
     /// Sort torrents by given key. They can be sorted using any field of the response's JSON array (which are documented below) as the sort key.
+    #[builder(setter(strip_option), default)]
     pub sort: Option<TorrentSort>,
     /// Enable reverse sorting. Defaults to `false`
+    #[builder(default)]
     pub reverse: bool,
     /// Limit the number of torrents returned
+    #[builder(setter(into, strip_option), default)]
     pub limit: Option<i64>,
     /// Set offset (if less than 0, offset from end)
+    #[builder(setter(into, strip_option), default)]
     pub offset: Option<i64>,
     /// Filter by hashes. Can contain multiple hashes separated by `|`
+    #[builder(setter(into, strip_option), default)]
     pub hashes: Option<Vec<String>>,
 }
 
 /// Posibel Torrent states
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TorrentState {
     All,
     Downloading,
@@ -62,7 +71,7 @@ impl Display for TorrentState {
 }
 
 /// Torrent sort fields
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TorrentSort {
     /// Time when the torrent was added to the client
     AddedOn,
@@ -218,39 +227,54 @@ impl Display for TorrentSort {
 }
 
 /// Add torrent parameter object
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Builder)]
 pub struct AddTorrent {
     /// A list of torrent files or magnet links to be added.
     ///
     /// This field is required and must contain at least one item.
+    #[builder(setter(into))]
     pub torrents: AddTorrentType,
     /// Download folder
+    #[builder(setter(into, strip_option), default)]
     pub savepath: Option<String>,
     /// Category for the torrent
+    #[builder(setter(into, strip_option), default)]
     pub category: Option<String>,
     /// Tags for the torrent, split by `,`
+    #[builder(setter(into, strip_option), default)]
     pub tags: Option<Vec<String>>,
     /// Skip hash checking. Possible values are `true`, `false` (default)
+    #[builder(default)]
     pub skip_checking: bool,
     /// Add torrents in the paused state. Possible values are `true`, `false` (default)
+    #[builder(default)]
     pub paused: bool,
     /// Create the root folder. Possible values are `"true"`, `"false"`, unset (default)
+    #[builder(setter(into, strip_option), default)]
     pub root_folder: Option<String>,
     /// Rename torrent
+    #[builder(setter(into, strip_option), default)]
     pub rename: Option<String>,
     /// Set torrent upload speed limit. Unit in bytes/second
+    #[builder(setter(into, strip_option), default)]
     pub up_limit: Option<i64>,
     /// Set torrent download speed limit. Unit in bytes/second
+    #[builder(setter(into, strip_option), default)]
     pub dl_limit: Option<i64>,
     /// Set torrent share ratio limit
+    #[builder(setter(into, strip_option), default)]
     pub ratio_limit: Option<f32>,
     /// Set torrent seeding time limit. Unit in minutes
+    #[builder(setter(into, strip_option), default)]
     pub seeding_time_limit: Option<i64>,
     /// Whether Automatic Torrent Management should be used
+    #[builder(default)]
     pub auto_tmm: bool,
     /// Enable sequential download. Possible values are `true`, `false` (default)
+    #[builder(default)]
     pub sequential_download: bool,
     /// Prioritize download first last piece. Possible values are `true`, `false` (default)
+    #[builder(default)]
     pub first_last_piece_prio: bool,
 }
 
@@ -263,7 +287,7 @@ impl AddTorrent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AddTorrentType {
     Links(Vec<String>),
     Files(Vec<TorrentFile>),
@@ -278,13 +302,25 @@ impl AddTorrentType {
     }
 }
 
+impl From<Vec<String>> for AddTorrentType {
+    fn from(value: Vec<String>) -> Self {
+        Self::Links(value)
+    }
+}
+
+impl From<Vec<TorrentFile>> for AddTorrentType {
+    fn from(value: Vec<TorrentFile>) -> Self {
+        Self::Files(value)
+    }
+}
+
 impl Default for AddTorrentType {
     fn default() -> Self {
         AddTorrentType::Links(vec![])
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TorrentFile {
     pub filename: String,
     pub data: Vec<u8>,
