@@ -11,7 +11,7 @@ use crate::{
 };
 
 impl super::Api {
-    /// Get torrent list
+    /// Get torrent listf
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-torrent-list)
     ///
@@ -375,6 +375,7 @@ impl super::Api {
         form = form.text("paused", params.paused.to_string());
         form = form.text("autoTMM", params.auto_tmm.to_string());
         form = form.text("sequentialDownload", params.sequential_download.to_string());
+        form = form.text("contentLayout", params.content_layout.to_string());
         form = form.text(
             "firstLastPiecePrio",
             params.first_last_piece_prio.to_string(),
@@ -387,9 +388,6 @@ impl super::Api {
         }
         if let Some(tags) = params.tags {
             form = form.text("tags", tags.join(","));
-        }
-        if let Some(root_folder) = params.root_folder {
-            form = form.text("root_folder", root_folder);
         }
         if let Some(rename) = params.rename {
             form = form.text("rename", rename);

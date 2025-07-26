@@ -17,24 +17,20 @@ pub struct BuildInfo {
     /// Application bitness (e.g. 64-bit)
     pub bitness: u8,
 }
-
 /// Preferences response data object.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Preferences {
+    // ========== General Settings ==========
     /// Currently selected language (e.g. en_GB for English)
     pub locale: String,
-    // True if a subfolder should be created when adding a torrent
-    // NOTE: Removed since I can't find it in the code. Most likely old documentation
-    // pub create_subfolder_enabled: Option<bool>,
-    // True if torrents should be added in a Paused state
-    // NOTE: Removed since I can't find it in the code. Most likely old documentation
-    // pub start_paused_enabled: Option<bool>,
     /// TODO
     pub auto_delete_mode: u8,
     /// True if disk space should be pre-allocated for all files
     pub preallocate_all: bool,
     /// True if ".!qB" should be appended to incomplete files
     pub incomplete_files_ext: bool,
+
+    // ========== Torrent Management ==========
     /// True if Automatic Torrent Management is enabled by default
     pub auto_tmm_enabled: bool,
     /// True if torrent should be relocated when its Category changes
@@ -43,6 +39,16 @@ pub struct Preferences {
     pub save_path_changed_tmm_enabled: bool,
     /// True if torrent should be relocated when its Category's save path changes
     pub category_changed_tmm_enabled: bool,
+    /// The default layout of the torrent content.
+    pub torrent_content_layout: ContentLayout,
+    /// The size limit of `.torrent` files
+    pub torrent_file_size_limit: u64,
+    /// When does the torrent stop
+    pub torrent_stop_condition: StopCondition,
+    /// What to do with removing torrents.
+    pub torrent_content_remove_option: TorrentDeletion,
+
+    // ========== File Paths ==========
     /// Default save path for torrents, separated by slashes
     pub save_path: String,
     /// True if folder for incomplete torrents is enabled
@@ -55,6 +61,8 @@ pub struct Preferences {
     pub export_dir: String,
     /// Path to directory to copy .torrent files of completed downloads to. Slashes are used as path separators
     pub export_dir_fin: String,
+
+    // ========== Email Notifications ==========
     /// True if e-mail notification should be enabled
     pub mail_notification_enabled: bool,
     /// e-mail where notifications should originate from
@@ -71,10 +79,14 @@ pub struct Preferences {
     pub mail_notification_username: String,
     /// Password for smtp authentication
     pub mail_notification_password: String,
+
+    // ========== External Programs ==========
     /// True if external program should be run after torrent has finished downloading
     pub autorun_enabled: bool,
     /// Program path/name/arguments to run if `autorun_enabled` is enabled; path is separated by slashes; you can use `%f` and `%n` arguments, which will be expanded by qBittorent as path_to_torrent_file and torrent_name (from the GUI; not the .torrent file name) respectively
     pub autorun_program: String,
+
+    // ========== Queue Management ==========
     /// True if torrent queuing is enabled
     pub queueing_enabled: bool,
     /// Maximum number of active simultaneous downloads
@@ -91,12 +103,20 @@ pub struct Preferences {
     pub slow_torrent_ul_rate_threshold: i64,
     /// Seconds a torrent should be inactive before considered "slow"
     pub slow_torrent_inactive_timer: i64,
+
+    // ========== Share Ratio Limits ==========
     /// True if share ratio limit is enabled
     pub max_ratio_enabled: bool,
     /// Get the global share ratio limit
     pub max_ratio: f64,
     /// Action performed when a torrent reaches the maximum share ratio. See list of possible values here below.
     pub max_ratio_act: RatioAct,
+    /// True enables max seeding time
+    pub max_seeding_time_enabled: bool,
+    /// Number of minutes to seed a torrent
+    pub max_seeding_time: i64,
+
+    // ========== Connection Settings ==========
     /// Port for incoming connections
     pub listen_port: u16,
     /// True if UPnP/NAT-PMP is enabled
@@ -106,10 +126,6 @@ pub struct Preferences {
     /// NOTE: This is marked as deprecated in the src file
     /// [Github referanse](https://github.com/qbittorrent/qBittorrent/blob/4f94eac235cefa8b83489cb3135dad87fcbed1e3/src/webui/api/appcontroller.cpp#L228)
     pub random_port: bool,
-    /// Global download speed limit in KiB/s; -1 means no limit is applied
-    pub dl_limit: i64,
-    /// Global upload speed limit in KiB/s; -1 means no limit is applied
-    pub up_limit: i64,
     /// Maximum global number of simultaneous connections
     ///
     /// `-1` means disabled
@@ -126,24 +142,18 @@ pub struct Preferences {
     ///
     /// `-1` means disabled
     pub max_uploads_per_torrent: i64,
-    /// Timeout in seconds for a stopped announce request to trackers
-    ///
-    /// If the value is set to 0, the connections to trackers with the stopped event are suppressed.
-    pub stop_tracker_timeout: i64,
-    /// True if the advanced libtorrent option piece_extent_affinity is enabled
-    pub enable_piece_extent_affinity: bool,
-    /// Bittorrent Protocol to use (see list of possible values below)
-    pub bittorrent_protocol: BittorrentProtocol,
-    /// True if `dl_limit` should be applied to uTP connections; this option is only available in qBittorent built against libtorrent version `0.16.X` and higher
-    pub limit_utp_rate: bool,
-    /// True if `dl_limit` should be applied to estimated TCP overhead (service data: e.g. packet headers)
-    pub limit_tcp_overhead: bool,
-    /// True if `dl_limit` should be applied to peers on the LAN
-    pub limit_lan_peers: bool,
+
+    // ========== Speed Limits ==========
+    /// Global download speed limit in KiB/s; -1 means no limit is applied
+    pub dl_limit: i64,
+    /// Global upload speed limit in KiB/s; -1 means no limit is applied
+    pub up_limit: i64,
     /// Alternative global download speed limit in KiB/s
     pub alt_dl_limit: i64,
     /// Alternative global upload speed limit in KiB/s
     pub alt_up_limit: i64,
+
+    // ========== Speed Limit Scheduler ==========
     /// True if alternative limits should be applied according to schedule
     pub scheduler_enabled: bool,
     /// Scheduler starting hour
@@ -156,16 +166,34 @@ pub struct Preferences {
     pub schedule_to_min: i8,
     /// Scheduler days. See possible values here below
     pub scheduler_days: SchedulerTime,
+
+    // ========== BitTorrent Protocol ==========
+    /// Bittorrent Protocol to use (see list of possible values below)
+    pub bittorrent_protocol: BittorrentProtocol,
+    /// True if `dl_limit` should be applied to uTP connections; this option is only available in qBittorent built against libtorrent version `0.16.X` and higher
+    pub limit_utp_rate: bool,
+    /// True if `dl_limit` should be applied to estimated TCP overhead (service data: e.g. packet headers)
+    pub limit_tcp_overhead: bool,
+    /// True if `dl_limit` should be applied to peers on the LAN
+    pub limit_lan_peers: bool,
+    /// μTP-TCP mixed mode algorithm (see list of possible values below)
+    pub utp_tcp_mixed_mode: UtpTcpMixedMode,
+
+    // ========== Peer Discovery ==========
     /// True if DHT is enabled
     pub dht: bool,
     /// True if PeX is enabled
     pub pex: bool,
     /// True if LSD is enabled
     pub lsd: bool,
+
+    // ========== Encryption & Privacy ==========
     /// See list of possible values here below
     pub encryption: Encryption,
     /// If true anonymous mode will be enabled; read more here; this option is only available in qBittorent built against libtorrent version 0.16.X and higher
     pub anonymous_mode: bool,
+
+    // ========== Proxy Settings ==========
     /// See list of possible values here below
     pub proxy_type: ProxyType,
     /// Proxy IP address or domain name
@@ -180,15 +208,19 @@ pub struct Preferences {
     pub proxy_username: String,
     /// Password for proxy authentication
     pub proxy_password: String,
-    // True if proxy is only used for torrents
-    // NOTE: Removed since I can't find it in the code. Most likely old documentation
-    // pub proxy_torrents_only: bool,
+
+    // ========== IP Filtering ==========
     /// True if external IP filter should be enabled
     pub ip_filter_enabled: bool,
     /// Path to IP filter file (.dat, .p2p, .p2b files are supported); path is separated by slashes
     pub ip_filter_path: String,
     /// True if IP filters are applied to trackers
     pub ip_filter_trackers: bool,
+    /// List of banned IPs
+    #[serde(rename = "banned_IPs")]
+    pub banned_ips: String,
+
+    // ========== WebUI Settings ==========
     /// Semicolon-separated list of domains to accept when performing Host header validation
     pub web_ui_domain_list: String,
     /// IP address to use for the WebUI
@@ -203,6 +235,8 @@ pub struct Preferences {
     ///
     /// The password is used exclusively for setting or updating the WebUI password.
     pub web_ui_password: Option<String>,
+
+    // ========== WebUI Security ==========
     /// True if WebUI CSRF protection is enabled
     pub web_ui_csrf_protection_enabled: bool,
     /// True if WebUI clickjacking protection is enabled
@@ -223,22 +257,28 @@ pub struct Preferences {
     pub bypass_auth_subnet_whitelist_enabled: bool,
     /// (White)list of ipv4/ipv6 subnets for which webui authentication should be bypassed; list entries are separated by commas
     pub bypass_auth_subnet_whitelist: String,
+
+    // ========== Alternative WebUI ==========
     /// True if an alternative WebUI should be used
     pub alternative_webui_enabled: bool,
     /// File path to the alternative WebUI
     pub alternative_webui_path: String,
+
+    // ========== WebUI HTTPS ==========
     /// True if WebUI HTTPS access is enabled
     pub use_https: bool,
-    // For API < v2.0.1: SSL keyfile contents (this is a not a path)
-    // NOTE: For a older version of the Web api
-    // pub ssl_key: String,
-    // For API < v2.0.1: SSL certificate contents (this is a not a path)
-    // NOTE: For a older version of the Web api
-    // pub ssl_cert: String,
     /// For API ≥ v2.0.1: Path to SSL keyfile
     pub web_ui_https_key_path: String,
     /// For API ≥ v2.0.1: Path to SSL certificate
     pub web_ui_https_cert_path: String,
+
+    // ========== WebUI Custom Headers ==========
+    /// For API ≥ v2.5.1: Enable custom http headers
+    pub web_ui_use_custom_http_headers_enabled: bool,
+    /// For API ≥ v2.5.1: List of custom http headers
+    pub web_ui_custom_http_headers: String,
+
+    // ========== Dynamic DNS ==========
     /// True if server DNS should be updated dynamically
     pub dyndns_enabled: bool,
     /// See list of possible values here below
@@ -249,6 +289,8 @@ pub struct Preferences {
     pub dyndns_password: String,
     /// Your DDNS domain name
     pub dyndns_domain: String,
+
+    // ========== RSS Settings ==========
     /// RSS refresh interval
     pub rss_refresh_interval: i64,
     /// Max stored articles per RSS feed
@@ -261,29 +303,28 @@ pub struct Preferences {
     pub rss_download_repack_proper_episodes: bool,
     /// For API ≥ v2.5.1: List of RSS Smart Episode Filters
     pub rss_smart_episode_filters: String,
+
+    // ========== Tracker Settings ==========
     /// Enable automatic adding of trackers to new torrents
     pub add_trackers_enabled: bool,
     /// List of trackers to add to new torrent
     pub add_trackers: String,
-    /// For API ≥ v2.5.1: Enable custom http headers
-    pub web_ui_use_custom_http_headers_enabled: bool,
-    /// For API ≥ v2.5.1: List of custom http headers
-    pub web_ui_custom_http_headers: String,
-    /// True enables max seeding time
-    pub max_seeding_time_enabled: bool,
-    /// Number of minutes to seed a torrent
-    pub max_seeding_time: i64,
+    /// Timeout in seconds for a stopped announce request to trackers
+    ///
+    /// If the value is set to 0, the connections to trackers with the stopped event are suppressed.
+    pub stop_tracker_timeout: i64,
     /// TODO
     pub announce_ip: String,
     /// True always announce to all tiers
     pub announce_to_all_tiers: bool,
     /// True always announce to all trackers in a tier
     pub announce_to_all_trackers: bool,
+
+    // ========== Advanced LibTorrent Settings ==========
+    /// True if the advanced libtorrent option piece_extent_affinity is enabled
+    pub enable_piece_extent_affinity: bool,
     /// Number of asynchronous I/O threads
     pub async_io_threads: u16,
-    /// List of banned IPs
-    #[serde(rename = "banned_IPs")]
-    pub banned_ips: String,
     /// Outstanding memory when checking torrents in MiB
     pub checking_memory_use: u32,
     /// IP Address to bind to. Empty String means All addresses
@@ -302,9 +343,6 @@ pub struct Preferences {
     pub enable_embedded_tracker: bool,
     /// True allows multiple connections from the same IP address
     pub enable_multi_connections_from_same_ip: bool,
-    // True enables os cache
-    // NOTE: Removed since I can't find it in the code. Most likely old documentation
-    // pub enable_os_cache: bool,
     /// True enables sending of upload piece suggestions
     pub enable_upload_suggestions: bool,
     /// File pool size
@@ -363,8 +401,86 @@ pub struct Preferences {
     /// (nor correctly returning an error indicating lack of support). In those
     /// cases, set this to 0. Otherwise, don't set it any lower than 5 minutes.
     pub upnp_lease_duration: u32,
-    /// μTP-TCP mixed mode algorithm (see list of possible values below)
-    pub utp_tcp_mixed_mode: UtpTcpMixedMode,
+}
+
+/// How the torrent content is laied out.
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ContentLayout {
+    /// Does whatever the server says to do, which by default is Subfolder
+    Original,
+    /// In cases of batches, will create a separate subfolder automatically of the batch name.
+    /// Example: `Save_path/Torrent_name/Torrent_files`
+    Subfolder,
+    /// In cases of batches, will just place them all in the save_path.
+    /// Example: `Save_path/Torrent_files`
+    NoSubfolder,
+}
+
+impl Default for ContentLayout {
+    fn default() -> Self {
+        Self::Original
+    }
+}
+
+impl std::fmt::Display for ContentLayout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ContentLayout::Original => write!(f, "Original"),
+            ContentLayout::Subfolder => write!(f, "Subfolder"),
+            ContentLayout::NoSubfolder => write!(f, "NoSubfolder"),
+        }
+    }
+}
+
+/// When does the torrent stop
+#[derive(Debug, Serialize, Deserialize)]
+pub enum StopCondition {
+    /// Don't stop and go straight to downloading
+    None,
+    /// Stop after receiving the metadata
+    MetadataReceived,
+    /// Stop after checking the files.
+    FilesChecked,
+}
+
+impl Default for StopCondition {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl std::fmt::Display for StopCondition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StopCondition::None => write!(f, "None"),
+            StopCondition::MetadataReceived => write!(f, "MetadataReceived"),
+            StopCondition::FilesChecked => write!(f, "FilesChecked"),
+        }
+    }
+}
+
+/// What to do when removing content files upon removing a torrent.
+#[derive(Debug, Serialize, Deserialize)]
+pub enum TorrentDeletion {
+    /// Erase from disk permanatly
+    Delete,
+    /// Attempts to move to Trash/Wastebin if possible.
+    MoveToTrash,
+}
+
+impl Default for TorrentDeletion {
+    fn default() -> Self {
+        Self::Delete
+    }
+}
+
+impl std::fmt::Display for TorrentDeletion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Delete => write!(f, "Delete"),
+            Self::MoveToTrash => write!(f, "MoveToTrash"),
+        }
+    }
 }
 
 /// Scan dir types

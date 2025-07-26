@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::models::ContentLayout;
+
 /// Torrent List/info parameter object
 #[derive(Debug, Default)]
 pub struct TorrentListParams {
@@ -234,8 +236,8 @@ pub struct AddTorrent {
     pub skip_checking: bool,
     /// Add torrents in the paused state. Possible values are `true`, `false` (default)
     pub paused: bool,
-    /// Create the root folder. Possible values are `"true"`, `"false"`, unset (default)
-    pub root_folder: Option<String>,
+    /// The torrent subfolder layout.
+    pub content_layout: ContentLayout,
     /// Rename torrent
     pub rename: Option<String>,
     /// Set torrent upload speed limit. Unit in bytes/second
