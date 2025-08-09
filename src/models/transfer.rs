@@ -5,7 +5,7 @@ use crate::models::ConnectionStatus;
 /// Transfer info data object
 ///
 /// This is the data that whuld usually se in the Qbit status bar.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TransferInfo {
     /// Global download rate (bytes/s)
     pub dl_info_speed: i64,

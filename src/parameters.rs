@@ -4,7 +4,7 @@ use std::fmt::Display;
 use crate::models::ContentLayout;
 
 /// Torrent List/info parameter object
-#[derive(Debug, Default, Builder)]
+#[derive(Debug, Default, Builder, Clone)]
 pub struct TorrentListParams {
     /// Filter torrent list by state. Allowed state filters: TorrentState
     #[builder(setter(strip_option), default)]
@@ -229,7 +229,7 @@ impl Display for TorrentSort {
 }
 
 /// Add torrent parameter object
-#[derive(Debug, Default, Builder)]
+#[derive(Debug, Default, Builder, Clone)]
 pub struct AddTorrent {
     /// A list of torrent files or magnet links to be added.
     ///

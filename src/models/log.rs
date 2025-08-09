@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 /// Log item data object
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LogItem {
     /// ID of the message
     pub id: i64,
@@ -20,7 +20,7 @@ pub struct LogItem {
 /// Log types
 ///
 /// Log levels used by the logger
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum LogType {
     Normal = 1,
@@ -30,7 +30,7 @@ pub enum LogType {
 }
 
 /// Peer log item data object
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LogPeers {
     /// ID of the peer
     pub id: i64,

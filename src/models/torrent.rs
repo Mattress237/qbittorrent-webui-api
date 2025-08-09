@@ -7,7 +7,7 @@ use serde::{
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 /// Torrent info response object
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Torrent {
     /// Time (Unix Epoch) when the torrent was added to the client
     pub added_on: i64,
@@ -132,7 +132,7 @@ pub struct Torrent {
     pub upspeed: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct TorrentsMap(pub HashMap<String, Torrent>);
 
 impl Deref for TorrentsMap {
@@ -297,7 +297,7 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
 }
 
 /// Generic torrent properties
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TorrentProperties {
     /// Torrent save path
     pub save_path: String,
@@ -373,7 +373,7 @@ pub struct TorrentProperties {
 }
 
 /// Torrent tracker data object
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Tracker {
     /// Tracker url
     pub url: String,
@@ -394,14 +394,14 @@ pub struct Tracker {
 }
 
 /// Web seed data object
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct WebSeed {
     /// Web seed URL
     pub url: String,
 }
 
 /// Torrent file/content data object
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TorrentContent {
     /// File index
     pub index: i64,
@@ -422,7 +422,7 @@ pub struct TorrentContent {
 }
 
 /// File priority enum
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum FilePriority {
     /// Do not download
@@ -436,7 +436,7 @@ pub enum FilePriority {
 }
 
 /// Pices state
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum PiecesState {
     NotDownloaded = 0,

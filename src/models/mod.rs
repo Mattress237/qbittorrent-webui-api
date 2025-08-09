@@ -17,7 +17,7 @@ pub use torrent::*;
 pub use transfer::*;
 
 /// Connection status of the Qbit application
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum ConnectionStatus {
     #[serde(rename = "connected")]
     Connected,

@@ -4,7 +4,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 /// Build info response data object.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct BuildInfo {
     /// QT version
     pub qt: String,
@@ -18,7 +18,7 @@ pub struct BuildInfo {
     pub bitness: u8,
 }
 /// Preferences response data object.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Preferences {
     // ========== General Settings ==========
     /// Currently selected language (e.g. en_GB for English)
@@ -433,7 +433,7 @@ impl std::fmt::Display for ContentLayout {
 }
 
 /// When does the torrent stop
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum StopCondition {
     /// Don't stop and go straight to downloading
     None,
@@ -460,7 +460,7 @@ impl std::fmt::Display for StopCondition {
 }
 
 /// What to do when removing content files upon removing a torrent.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum TorrentDeletion {
     /// Erase from disk permanatly
     Delete,
@@ -484,7 +484,7 @@ impl std::fmt::Display for TorrentDeletion {
 }
 
 /// Scan dir types
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ScanDir {
     MonitoredFolder,
     DefaultSavePath,
@@ -528,7 +528,7 @@ impl Serialize for ScanDir {
 }
 
 /// Ratio actions
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum RatioAct {
     PauseTorrent = 0,
@@ -536,7 +536,7 @@ pub enum RatioAct {
 }
 
 /// Bittorrent protocols
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum BittorrentProtocol {
     Tcpμtp = 0,
@@ -545,7 +545,7 @@ pub enum BittorrentProtocol {
 }
 
 /// Scheduler
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum SchedulerTime {
     /// Every day
@@ -571,7 +571,7 @@ pub enum SchedulerTime {
 }
 
 /// Encryption states
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum Encryption {
     Prefer = 0,
@@ -580,7 +580,7 @@ pub enum Encryption {
 }
 
 /// Proxy types states
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ProxyType {
     Disabled,
     Other(String),
@@ -636,7 +636,7 @@ impl Serialize for ProxyType {
 }
 
 /// Dyndns servcice types
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum DyndnsService {
     Dydns = 0,
@@ -644,7 +644,7 @@ pub enum DyndnsService {
 }
 
 /// Upload choking algorithm
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum UploadChokingAlgorithm {
     RoundRobin = 0,
@@ -653,7 +653,7 @@ pub enum UploadChokingAlgorithm {
 }
 
 /// Upload slots behavior
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum UploadSlotsBehavior {
     Fixed = 0,
@@ -661,13 +661,13 @@ pub enum UploadSlotsBehavior {
 }
 
 /// Mix mode UTP / TCP
-#[derive(Debug, Deserialize_repr, Serialize_repr)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
 #[repr(u8)]
 pub enum UtpTcpMixedMode {
     PreferTcp = 0,
     PeerProportional = 1,
 }
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Cookie {
     /// The name of the cookie.
     pub name: String,
