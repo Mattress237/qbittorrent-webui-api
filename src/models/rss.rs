@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 /// This module defines structures for representing RSS feeds collections.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum RssFeedCollection {
     /// Represents a full RSS feed object containing detailed information about the feed.
@@ -15,7 +15,7 @@ pub enum RssFeedCollection {
 }
 
 /// Represents a base RSS feed object with minimal information.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct RssFeedBase {
     /// Unique identifier for the RSS feed.
     uid: String,
@@ -24,7 +24,7 @@ pub struct RssFeedBase {
 }
 
 /// Represents a detailed RSS feed object containing full information.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct RssFeed {
     /// Unique identifier for the RSS feed.
     uid: String,
@@ -46,7 +46,7 @@ pub struct RssFeed {
 }
 
 /// Represents an article within an RSS feed.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct RssArticle {
     /// Identifier for the article.
     id: String,
@@ -63,7 +63,7 @@ pub struct RssArticle {
     date: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct RssRule {
     /// Whether the rule is enabled
     enabled: bool,

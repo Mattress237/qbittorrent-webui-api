@@ -17,12 +17,13 @@ pub use torrent::*;
 pub use transfer::*;
 
 /// Connection status of the Qbit application
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum ConnectionStatus {
     #[serde(rename = "connected")]
     Connected,
     #[serde(rename = "firewalled")]
     Firewalled,
     #[serde(rename = "disconnected")]
+    #[default]
     Disconnected,
 }

@@ -10,6 +10,7 @@ use std::fmt::Display;
 
 pub use client::Api;
 pub use error::Error;
+use serde::{Deserialize, Serialize};
 
 /// Login state
 ///
@@ -17,7 +18,7 @@ pub use error::Error;
 ///
 /// Inspired by the design from [George-Miao qbit repo](https://github.com/George-Miao/qbit) -
 /// [Commit](https://github.com/George-Miao/qbit/commit/fe1240c05b4d3feeafb327e8ba7f0eeba97735c5#diff-b1a35a68f14e696205874893c07fd24fdb88882b47c23cc0e0c80a30c7d53759R28)
-#[derive(Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum LoginState {
     LoggedIn {
         credentials: Credentials,
@@ -29,6 +30,7 @@ pub enum LoginState {
     CookieProvidet {
         cookie_sid: String,
     },
+    #[default]
     Unknown,
 }
 
@@ -78,7 +80,7 @@ impl LoginState {
 }
 
 /// The `Credentials` struct represents a user's login credentials.
-#[derive(Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Credentials {
     username: String,
     password: String,

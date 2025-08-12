@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Search {
     /// ID of the search job
     pub id: u64,
@@ -10,13 +10,14 @@ pub struct Search {
     pub total: u64,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum SearchStatus {
     Running,
+    #[default]
     Stopped,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchResult {
     /// List of `SearchResultItem`.
     pub results: Vec<SearchResultItem>,
@@ -26,7 +27,7 @@ pub struct SearchResult {
     pub total: u64,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchResultItem {
     /// URL pointing to the torrent's description page on the source site.
     #[serde(rename = "descrLink")]
@@ -51,7 +52,7 @@ pub struct SearchResultItem {
     pub site_url: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchPlugin {
     /// Whether the plugin is enabled.
     pub enabled: bool,
@@ -69,7 +70,7 @@ pub struct SearchPlugin {
     pub version: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchCategory {
     /// Identifier for the category (e.g., "all", "books", "tv").
     pub id: String,

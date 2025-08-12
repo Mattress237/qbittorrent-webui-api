@@ -7,7 +7,7 @@ use serde::{
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 /// Torrent info response object
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Torrent {
     /// Time (Unix Epoch) when the torrent was added to the client
     pub added_on: i64,
@@ -132,7 +132,7 @@ pub struct Torrent {
     pub upspeed: i64,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Default, PartialEq)]
 pub struct TorrentsMap(pub HashMap<String, Torrent>);
 
 impl Deref for TorrentsMap {
@@ -152,6 +152,7 @@ impl<'de> Deserialize<'de> for TorrentsMap {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 struct TorrentMapVisitor;
 
 impl<'de> Visitor<'de> for TorrentMapVisitor {
@@ -297,7 +298,7 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
 }
 
 /// Generic torrent properties
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct TorrentProperties {
     /// Torrent save path
     pub save_path: String,
@@ -373,7 +374,7 @@ pub struct TorrentProperties {
 }
 
 /// Torrent tracker data object
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Tracker {
     /// Tracker url
     pub url: String,
@@ -394,14 +395,14 @@ pub struct Tracker {
 }
 
 /// Web seed data object
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct WebSeed {
     /// Web seed URL
     pub url: String,
 }
 
 /// Torrent file/content data object
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct TorrentContent {
     /// File index
     pub index: i64,
@@ -422,12 +423,13 @@ pub struct TorrentContent {
 }
 
 /// File priority enum
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
 #[repr(u8)]
 pub enum FilePriority {
     /// Do not download
     DoNotDownload = 0,
     /// Normal priority
+    #[default]
     Normal = 1,
     /// High priority
     High = 6,
@@ -436,9 +438,10 @@ pub enum FilePriority {
 }
 
 /// Pices state
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
 #[repr(u8)]
 pub enum PiecesState {
+    #[default]
     NotDownloaded = 0,
     Downloading = 1,
     Downloaded = 2,

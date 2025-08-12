@@ -18,6 +18,7 @@ mod torrent;
 mod transfer;
 
 /// Represents a client for interacting with a remote API, handling HTTP requests.
+#[derive(Debug)]
 pub struct Api {
     http_client: ReqwestClient,
     base_url: tokio::sync::RwLock<Url>,

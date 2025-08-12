@@ -1,10 +1,11 @@
 use derive_builder::Builder;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 use crate::models::ContentLayout;
 
 /// Torrent List/info parameter object
-#[derive(Debug, Default, Builder, Clone)]
+#[derive(Debug, Default, Builder, Clone, Deserialize, Serialize, PartialEq)]
 pub struct TorrentListParams {
     /// Filter torrent list by state. Allowed state filters: TorrentState
     #[builder(setter(strip_option), default)]
@@ -33,8 +34,9 @@ pub struct TorrentListParams {
 }
 
 /// Possible Torrent states
-#[derive(Debug, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum TorrentState {
+    #[default]
     All,
     Downloading,
     Seeding,
@@ -73,9 +75,10 @@ impl Display for TorrentState {
 }
 
 /// Torrent sort fields
-#[derive(Debug, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum TorrentSort {
     /// Time when the torrent was added to the client
+    #[default]
     AddedOn,
     /// Amount of data left to download
     AmountLeft,
@@ -176,60 +179,60 @@ impl Display for TorrentSort {
             f,
             "{}",
             match self {
-                Self::AddedOn => String::from("added_on"),
-                Self::AmountLeft => String::from("amount_left"),
-                Self::AutoTmm => String::from("auto_tmm"),
-                Self::Availability => String::from("availability"),
-                Self::Category => String::from("category"),
-                Self::Completed => String::from("completed"),
-                Self::CompletionOn => String::from("completion_on"),
-                Self::ContentPath => String::from("content_path"),
-                Self::DlLimit => String::from("dl_limit"),
-                Self::Dlspeed => String::from("dlspeed"),
-                Self::Downloaded => String::from("downloaded"),
-                Self::DownloadedSession => String::from("downloaded_session"),
-                Self::Eta => String::from("eta"),
-                Self::FLPiecePrio => String::from("f_l_piece_prio"),
-                Self::ForceStart => String::from("force_start"),
-                Self::Hash => String::from("hash"),
-                Self::Private => String::from("private"),
-                Self::LastActivity => String::from("last_activity"),
-                Self::MagnetUri => String::from("magnet_uri"),
-                Self::MaxRatio => String::from("max_ratio"),
-                Self::MaxSeedingTime => String::from("max_seeding_time"),
-                Self::Name => String::from("name"),
-                Self::NumComplete => String::from("num_complete"),
-                Self::NumIncomplete => String::from("num_incomplete"),
-                Self::NumLeechs => String::from("num_leechs"),
-                Self::NumSeeds => String::from("num_seeds"),
-                Self::Priority => String::from("priority"),
-                Self::Progress => String::from("progress"),
-                Self::Ratio => String::from("ratio"),
-                Self::RatioLimit => String::from("ratio_limit"),
-                Self::Reannounce => String::from("reannounce"),
-                Self::SavePath => String::from("save_path"),
-                Self::SeedingTime => String::from("seeding_time"),
-                Self::SeedingTimeLimit => String::from("seeding_time_limit"),
-                Self::SeenComplete => String::from("seen_complete"),
-                Self::SeqDl => String::from("seq_dl"),
-                Self::Size => String::from("size"),
-                Self::State => String::from("state"),
-                Self::SuperSeeding => String::from("super_seeding"),
-                Self::Tags => String::from("tags"),
-                Self::TimeActive => String::from("time_active"),
-                Self::TotalSize => String::from("total_size"),
-                Self::Tracker => String::from("tracker"),
-                Self::UpLimit => String::from("up_limit"),
-                Self::Uploaded => String::from("uploaded"),
-                Self::UploadedSession => String::from("uploaded_session"),
-                Self::Upspeed => String::from("upspeed"),
+                Self::AddedOn => "added_on",
+                Self::AmountLeft => "amount_left",
+                Self::AutoTmm => "auto_tmm",
+                Self::Availability => "availability",
+                Self::Category => "category",
+                Self::Completed => "completed",
+                Self::CompletionOn => "completion_on",
+                Self::ContentPath => "content_path",
+                Self::DlLimit => "dl_limit",
+                Self::Dlspeed => "dlspeed",
+                Self::Downloaded => "downloaded",
+                Self::DownloadedSession => "downloaded_session",
+                Self::Eta => "eta",
+                Self::FLPiecePrio => "f_l_piece_prio",
+                Self::ForceStart => "force_start",
+                Self::Hash => "hash",
+                Self::Private => "private",
+                Self::LastActivity => "last_activity",
+                Self::MagnetUri => "magnet_uri",
+                Self::MaxRatio => "max_ratio",
+                Self::MaxSeedingTime => "max_seeding_time",
+                Self::Name => "name",
+                Self::NumComplete => "num_complete",
+                Self::NumIncomplete => "num_incomplete",
+                Self::NumLeechs => "num_leechs",
+                Self::NumSeeds => "num_seeds",
+                Self::Priority => "priority",
+                Self::Progress => "progress",
+                Self::Ratio => "ratio",
+                Self::RatioLimit => "ratio_limit",
+                Self::Reannounce => "reannounce",
+                Self::SavePath => "save_path",
+                Self::SeedingTime => "seeding_time",
+                Self::SeedingTimeLimit => "seeding_time_limit",
+                Self::SeenComplete => "seen_complete",
+                Self::SeqDl => "seq_dl",
+                Self::Size => "size",
+                Self::State => "state",
+                Self::SuperSeeding => "super_seeding",
+                Self::Tags => "tags",
+                Self::TimeActive => "time_active",
+                Self::TotalSize => "total_size",
+                Self::Tracker => "tracker",
+                Self::UpLimit => "up_limit",
+                Self::Uploaded => "uploaded",
+                Self::UploadedSession => "uploaded_session",
+                Self::Upspeed => "upspeed",
             }
         )
     }
 }
 
 /// Add torrent parameter object
-#[derive(Debug, Default, Builder, Clone)]
+#[derive(Debug, Default, Builder, Clone, Deserialize, Serialize, PartialEq)]
 pub struct AddTorrent {
     /// A list of torrent files or magnet links to be added.
     ///
@@ -289,7 +292,7 @@ impl AddTorrent {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum AddTorrentType {
     Links(Vec<String>),
     Files(Vec<TorrentFile>),
@@ -322,7 +325,7 @@ impl Default for AddTorrentType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct TorrentFile {
     pub filename: String,
     pub data: Vec<u8>,
