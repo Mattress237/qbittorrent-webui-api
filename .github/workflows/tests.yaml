@@ -12,6 +12,7 @@ jobs:
       url: http://localhost
       port: 45378
       username: admin
+      temp_dir: .temp
 
       encrypted_password: "@ByteArray(ARQ77eY1NUZaQsuDHbIMCA==:0WMRkYTUWVT9wVvdDtHAjU9b3b7uB8NR1Gur2hmQCvCDpm39Q+PsJRJPaCU51dEiz+dTzh8qbPsL8WkFljQYFQ==)"
       password: adminadmin
@@ -50,4 +51,5 @@ jobs:
       - name: Run tests
         run: |
           ~/bin/qbittorrent-nox --confirm-legal-notice &
+
           cargo test -- --include-ignored

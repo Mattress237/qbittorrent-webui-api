@@ -10,6 +10,7 @@ use crate::{LoginState, error::Error};
 
 mod application;
 mod authentication;
+mod creator;
 mod log;
 mod rss;
 mod search;

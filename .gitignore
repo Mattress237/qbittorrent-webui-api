@@ -5,6 +5,8 @@ Cargo.lock
 
 # used in testing, should be local to device in most situtations. Github will automatically create one whilst testing.
 .env
+.temp
+.temp_data
 
 # Other
 /tests/me.rs

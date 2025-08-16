@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 mod application;
+mod creator;
 mod log;
 mod rss;
 mod search;
@@ -9,6 +10,7 @@ mod torrent;
 mod transfer;
 
 pub use application::*;
+pub use creator::*;
 pub use log::*;
 pub use rss::*;
 pub use search::*;

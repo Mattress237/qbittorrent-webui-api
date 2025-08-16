@@ -1,7 +1,12 @@
 use dotenv::dotenv;
-use qbit::{Api, parameters::AddTorrentBuilder};
-use std::env;
+use qbit::{
+    Api,
+    models::{TorrentCreatorBuilder, TorrentCreatorTask},
+    parameters::AddTorrentBuilder,
+};
+use std::{env, fs, path};
 
+pub mod application;
 pub mod authentication;
 pub mod sync;
 pub mod torrents;
@@ -26,10 +31,12 @@ pub fn get_server_details() -> String {
 }
 
 pub fn get_server_username() -> String {
+    dotenv().ok();
     env::var("username").unwrap_or("admin".to_string())
 }
 
 pub fn get_server_password() -> String {
+    dotenv().ok();
     env::var("password").unwrap_or("adminadmin".to_string())
 }
 
@@ -59,4 +66,38 @@ pub async fn add_debian_torrent(client: &Api) {
         .stop(vec![DEBIAN_HASH])
         .await
         .expect("Failed to stop torrent");
+}
+
+pub fn create_test_data() -> String {
+    dotenv().ok();
+    // persionally did not want to have to do this, but `/tmp` can cause some issues so...
+    let folder = env::var("temp_dir").unwrap();
+
+    if !fs::exists(&folder).unwrap() {
+        fs::create_dir(&folder).unwrap_or_default();
+    }
+    if !fs::exists(format!("{folder}_data")).unwrap() {
+        fs::create_dir(format!("{folder}_data")).unwrap_or_default();
+    }
+
+    fs::write(
+        format!("{folder}/dummy.txt"),
+        "This is a dummy file. You are a dummy for downloading this file.",
+    )
+    .expect("Failed to write dummy file");
+
+    path::absolute(folder).unwrap().display().to_string()
+}
+
+pub async fn create_dummy_torrent(client: &Api) -> Result<TorrentCreatorTask, qbit::Error> {
+    let folder = create_test_data();
+    let torrent = TorrentCreatorBuilder::default()
+        .source_path(&folder)
+        .start_seeding(true)
+        .private(true)
+        .torrent_file_path(format!("{folder}_data/dummy.torrent"))
+        .build()
+        .expect("Failed to build torrent creator");
+
+    client.create_task(&torrent).await
 }

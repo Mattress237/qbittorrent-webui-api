@@ -4,19 +4,13 @@ use qbit::Api;
 #[tokio::test]
 #[ignore = "Test hits api endpoint"]
 async fn correct_credentials() {
-    let result = Api::new_login_username_password(
+    Api::new_login_username_password(
         &get_server_details(),
         &get_server_username(),
         &get_server_password(),
     )
-    .await;
-
-    if result.is_err() {
-        println!("Err: {:?}", result.err().unwrap());
-        assert!(false);
-    }
-
-    assert!(true);
+    .await
+    .expect("Incorrect credentials");
 }
 
 #[tokio::test]

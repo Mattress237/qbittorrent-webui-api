@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -680,4 +680,31 @@ pub struct Cookie {
     /// The expiration date of the cookie, represented as seconds since the Unix epoch.
     #[serde(rename = "expirationDate")]
     pub expiration: i64,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DirMode {
+    Dirs,
+    Files,
+    All,
+}
+
+impl Default for DirMode {
+    fn default() -> Self {
+        Self::All
+    }
+}
+
+impl Display for DirMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                DirMode::Dirs => "dirs",
+                DirMode::Files => "files",
+                DirMode::All => "all",
+            }
+        )
+    }
 }

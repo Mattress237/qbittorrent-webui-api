@@ -310,9 +310,21 @@ impl From<Vec<String>> for AddTorrentType {
     }
 }
 
+impl From<String> for AddTorrentType {
+    fn from(value: String) -> Self {
+        Self::Links(vec![value])
+    }
+}
+
 impl From<Vec<TorrentFile>> for AddTorrentType {
     fn from(value: Vec<TorrentFile>) -> Self {
         Self::Files(value)
+    }
+}
+
+impl From<TorrentFile> for AddTorrentType {
+    fn from(value: TorrentFile) -> Self {
+        Self::Files(vec![value])
     }
 }
 
