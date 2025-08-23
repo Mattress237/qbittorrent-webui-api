@@ -80,8 +80,7 @@ impl super::Api {
     /// * `limit` - The global download speed limit to set in bytes/second. `0` if no limit.
     ///
     pub async fn set_global_download_limit(&self, limit: u64) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("limit", limit.to_string());
+        let form = multipart::Form::new().text("limit", limit.to_string());
 
         self._post("transfer/setDownloadLimit")
             .await?
@@ -119,8 +118,7 @@ impl super::Api {
     /// * `limit` - The global upload speed limit to set in bytes/second. `0` if no limit.
     ///
     pub async fn set_global_upload_limit(&self, limit: u64) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("limit", limit.to_string());
+        let form = multipart::Form::new().text("limit", limit.to_string());
 
         self._post("transfer/setUploadLimit")
             .await?
@@ -141,8 +139,7 @@ impl super::Api {
     /// * `peers` - The peer to ban, or multiple peers. Each peer is a colon-separated `host:port`
     ///
     pub async fn peers_ban(&self, peers: Vec<String>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("peers", peers.join("|"));
+        let form = multipart::Form::new().text("peers", peers.join("|"));
 
         self._post("transfer/banPeers")
             .await?

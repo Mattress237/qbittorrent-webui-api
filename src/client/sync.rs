@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use crate::{
     error::Error,
+    insert_optional,
     models::{MainData, PeersData},
 };
 
@@ -16,10 +19,8 @@ impl super::Api {
     /// * `rid` - Response ID. If not provided, `rid=0` will be assumed.
     ///
     pub async fn main_data(&self, rid: Option<i64>) -> Result<MainData, Error> {
-        let mut query = vec![];
-        if let Some(rid) = rid {
-            query.push(("rid", rid));
-        }
+        let mut query = HashMap::new();
+        insert_optional!(query, "rid", rid, |v: i64| v.to_string());
 
         let data = self
             ._get("sync/maindata")
@@ -47,11 +48,9 @@ impl super::Api {
     /// * `rid` - Response ID. If not provided, `rid=0` will be assumed.
     ///
     pub async fn peers_data(&self, hash: &str, rid: Option<i64>) -> Result<PeersData, Error> {
-        let mut query = vec![];
-        query.push(("hash", hash.to_string()));
-        if let Some(rid) = rid {
-            query.push(("rid", rid.to_string()));
-        }
+        let mut query = HashMap::new();
+        query.insert("hash", hash.to_string());
+        insert_optional!(query, "rid", rid, |v: i64| v.to_string());
 
         let data = self
             ._get("sync/torrentPeers")

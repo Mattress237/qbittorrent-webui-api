@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+
 use reqwest::multipart;
 
 use crate::{
     error::Error,
+    insert_optional,
     models::{Search, SearchPlugin, SearchResult},
 };
 
@@ -23,10 +26,10 @@ impl super::Api {
         plugins: &str,
         category: &str,
     ) -> Result<u64, Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("pattern", pattern.to_string());
-        form = form.text("plugins", plugins.to_string());
-        form = form.text("category", category.to_string());
+        let form = multipart::Form::new()
+            .text("pattern", pattern.to_string())
+            .text("plugins", plugins.to_string())
+            .text("category", category.to_string());
 
         let json: serde_json::Value = self
             ._post("search/start")
@@ -52,8 +55,7 @@ impl super::Api {
     /// * `id` - ID of the search job
     ///
     pub async fn search_stop(&self, id: u64) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("id", id.to_string());
+        let form = multipart::Form::new().text("id", id.to_string());
 
         self._post("search/stop")
             .await?
@@ -74,10 +76,8 @@ impl super::Api {
     /// * `id` - ID of the search job. If `None`, all search jobs are returned
     ///
     pub async fn search_status(&self, id: Option<u64>) -> Result<Vec<Search>, Error> {
-        let mut query = vec![];
-        if let Some(id) = id {
-            query.push(("id", id));
-        }
+        let mut query = HashMap::new();
+        insert_optional!(query, "id", id, |v: u64| v.to_string());
 
         let searches = self
             ._get("search/status")
@@ -110,12 +110,10 @@ impl super::Api {
         limit: u64,
         offset: Option<i64>,
     ) -> Result<SearchResult, Error> {
-        let mut query = vec![];
-        query.push(("id", id.to_string()));
-        query.push(("limit", limit.to_string()));
-        if let Some(offset) = offset {
-            query.push(("offset", offset.to_string()));
-        }
+        let mut query = HashMap::new();
+        query.insert("id", id.to_string());
+        query.insert("limit", limit.to_string());
+        insert_optional!(query, "offset", offset, |v: i64| v.to_string());
 
         let searches = self
             ._get("search/results")
@@ -138,8 +136,7 @@ impl super::Api {
     /// * `id` - The unique identifier of the search job.
     ///
     pub async fn search_delete(&self, id: u64) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("id", id.to_string());
+        let form = multipart::Form::new().text("id", id.to_string());
 
         self._post("search/delete")
             .await?
@@ -176,8 +173,7 @@ impl super::Api {
     /// * `sources` - List of Url and file path of the plugin to install.
     ///
     pub async fn search_install_plugin(&self, sources: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("sources", sources.join("|"));
+        let form = multipart::Form::new().text("sources", sources.join("|"));
 
         self._post("search/installPlugin")
             .await?
@@ -197,8 +193,7 @@ impl super::Api {
     /// * `names` - List of names for torrents to uninstall.
     ///
     pub async fn search_uninstall_plugin(&self, names: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("names", names.join("|"));
+        let form = multipart::Form::new().text("names", names.join("|"));
 
         self._post("search/uninstallPlugin")
             .await?
@@ -218,9 +213,9 @@ impl super::Api {
     /// * `names` - List of names for torrents to enable.
     ///
     pub async fn search_enable_plugin(&self, names: Vec<&str>, enable: bool) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("names", names.join("|"));
-        form = form.text("enable", enable.to_string());
+        let form = multipart::Form::new()
+            .text("names", names.join("|"))
+            .text("enable", enable.to_string());
 
         self._post("search/enablePlugin")
             .await?

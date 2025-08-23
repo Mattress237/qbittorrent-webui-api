@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -28,6 +30,21 @@ pub enum LogType {
     Info = 2,
     Warning = 4,
     Critical = 8,
+}
+
+impl Display for LogType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "{}",
+            match self {
+                LogType::Normal => "normal",
+                LogType::Info => "info",
+                LogType::Warning => "warning",
+                LogType::Critical => "critical",
+            }
+        )
+    }
 }
 
 /// Peer log item data object

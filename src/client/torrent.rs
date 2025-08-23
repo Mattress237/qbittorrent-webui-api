@@ -4,10 +4,11 @@ use reqwest::multipart;
 
 use crate::{
     error::Error,
+    insert_optional, insert_optional_form_text,
     models::{
         FilePriority, PiecesState, Torrent, TorrentContent, TorrentProperties, Tracker, WebSeed,
     },
-    parameters::{AddTorrent, AddTorrentType, TorrentListParams},
+    parameters::{AddTorrent, AddTorrentType, TorrentListParams, TorrentSort, TorrentState},
 };
 
 impl super::Api {
@@ -20,32 +21,17 @@ impl super::Api {
     /// * `parames` - Parameter object
     ///
     pub async fn torrents(&self, params: Option<TorrentListParams>) -> Result<Vec<Torrent>, Error> {
-        let mut query = vec![];
-
+        let mut query = HashMap::new();
         let params = params.unwrap_or_default();
-
-        query.push(("reverse", params.reverse.to_string()));
-        if let Some(filter) = params.filter {
-            query.push(("filter", filter.to_string()));
-        }
-        if let Some(category) = params.category {
-            query.push(("category", category));
-        }
-        if let Some(tag) = params.tag {
-            query.push(("tag", tag));
-        }
-        if let Some(sort) = params.sort {
-            query.push(("sort", sort.to_string()));
-        }
-        if let Some(limit) = params.limit {
-            query.push(("limit", limit.to_string()));
-        }
-        if let Some(offset) = params.offset {
-            query.push(("offset", offset.to_string()));
-        }
-        if let Some(hashes) = params.hashes {
-            query.push(("hashes", hashes.join("|")));
-        }
+        query.insert("reverse", params.reverse.to_string());
+        insert_optional!(query, "category", params.category, |v: String| v);
+        insert_optional!(query, "tag", params.tag, |v: String| v);
+        insert_optional!(query, "sort", params.sort, |v: TorrentSort| v.to_string());
+        insert_optional!(query, "limit", params.limit, |v: i64| v.to_string());
+        insert_optional!(query, "offset", params.offset, |v: i64| v.to_string());
+        insert_optional!(query, "hashes", params.hashes, |v: Vec<String>| v.join("|"));
+        insert_optional!(query, "filter", params.filter, |v: TorrentState| v
+            .to_string());
 
         let torrents = self
             ._get("torrents/info")
@@ -147,18 +133,13 @@ impl super::Api {
         hash: &str,
         indexes: Option<Vec<i64>>,
     ) -> Result<Vec<TorrentContent>, Error> {
-        let mut query = vec![];
-        query.push(("hash", hash.to_string()));
-        if let Some(indexes) = indexes {
-            query.push((
-                "filter",
-                indexes
-                    .iter()
-                    .map(|&x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join("|"),
-            ));
-        }
+        let mut query = HashMap::new();
+        query.insert("hash", hash.to_string());
+        insert_optional!(query, "filter", indexes, |v: Vec<i64>| v
+            .iter()
+            .map(|&x| x.to_string())
+            .collect::<Vec<String>>()
+            .join("|"));
 
         let webseeds = self
             ._get("torrents/files")
@@ -230,8 +211,7 @@ impl super::Api {
     /// * `hashes` - Hashes list of torrents to stop.
     ///
     pub async fn stop(&self, hashes: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hashes", hashes.join("|"));
+        let form = multipart::Form::new().text("hashes", hashes.join("|"));
 
         self._post("torrents/stop")
             .await?
@@ -252,8 +232,7 @@ impl super::Api {
     /// * `hashes` - Hashes list of torrents to start.
     ///
     pub async fn start(&self, hashes: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hashes", hashes.join("|"));
+        let form = multipart::Form::new().text("hashes", hashes.join("|"));
 
         self._post("torrents/start")
             .await?
@@ -276,9 +255,9 @@ impl super::Api {
     ///   otherwise has no effect.
     ///
     pub async fn delete(&self, hashes: Vec<&str>, delete_files: bool) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hashes", hashes.join("|"));
-        form = form.text("deleteFiles", delete_files.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.join("|"))
+            .text("deleteFiles", delete_files.to_string());
 
         self._post("torrents/delete")
             .await?
@@ -299,8 +278,7 @@ impl super::Api {
     /// * `hashes` - Hashes list of torrents to recheck.
     ///
     pub async fn recheck(&self, hashes: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hashes", hashes.join("|"));
+        let form = multipart::Form::new().text("hashes", hashes.join("|"));
 
         self._post("torrents/recheck")
             .await?
@@ -321,8 +299,7 @@ impl super::Api {
     /// * `hashes` - Hashes list of torrents to reannounce.
     ///
     pub async fn reannounce(&self, hashes: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hashes", hashes.join("|"));
+        let form = multipart::Form::new().text("hashes", hashes.join("|"));
 
         self._post("torrents/reannounce")
             .await?
@@ -371,39 +348,30 @@ impl super::Api {
             }
         };
 
-        form = form.text("skip_checking", params.skip_checking.to_string());
-        form = form.text("paused", params.paused.to_string());
-        form = form.text("autoTMM", params.auto_tmm.to_string());
-        form = form.text("sequentialDownload", params.sequential_download.to_string());
-        form = form.text("contentLayout", params.content_layout.to_string());
-        form = form.text(
-            "firstLastPiecePrio",
-            params.first_last_piece_prio.to_string(),
+        form = form
+            .text("skip_checking", params.skip_checking.to_string())
+            .text("paused", params.paused.to_string())
+            .text("autoTMM", params.auto_tmm.to_string())
+            .text("sequentialDownload", params.sequential_download.to_string())
+            .text("contentLayout", params.content_layout.to_string())
+            .text(
+                "firstLastPiecePrio",
+                params.first_last_piece_prio.to_string(),
+            );
+        form = insert_optional_form_text!(form, "savepath", params.savepath, |v: String| v);
+        form = insert_optional_form_text!(form, "category", params.category, |v: String| v);
+        form = insert_optional_form_text!(form, "tags", params.tags, |v: Vec<String>| v.join(","));
+        form = insert_optional_form_text!(form, "rename", params.rename, |v: String| v);
+        form = insert_optional_form_text!(form, "upLimit", params.up_limit, |v: i64| v.to_string());
+        form = insert_optional_form_text!(form, "dlLimit", params.dl_limit, |v: i64| v.to_string());
+        form = insert_optional_form_text!(form, "ratioLimit", params.ratio_limit, |v: f32| v
+            .to_string());
+        form = insert_optional_form_text!(
+            form,
+            "seedingTimeLimit",
+            params.seeding_time_limit,
+            |v: i64| v.to_string()
         );
-        if let Some(savepath) = params.savepath {
-            form = form.text("savepath", savepath);
-        }
-        if let Some(category) = params.category {
-            form = form.text("category", category);
-        }
-        if let Some(tags) = params.tags {
-            form = form.text("tags", tags.join(","));
-        }
-        if let Some(rename) = params.rename {
-            form = form.text("rename", rename);
-        }
-        if let Some(up_limit) = params.up_limit {
-            form = form.text("upLimit", up_limit.to_string());
-        }
-        if let Some(dl_limit) = params.dl_limit {
-            form = form.text("dlLimit", dl_limit.to_string());
-        }
-        if let Some(ratio_limit) = params.ratio_limit {
-            form = form.text("ratioLimit", ratio_limit.to_string());
-        }
-        if let Some(seeding_time_limit) = params.seeding_time_limit {
-            form = form.text("seedingTimeLimit", seeding_time_limit.to_string());
-        }
 
         self._post("torrents/add")
             .await?
@@ -425,9 +393,9 @@ impl super::Api {
     /// * `urls` - Trackers urls to add.
     ///
     pub async fn add_trackers_to_torrent(&self, hash: &str, urls: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hash", hash.to_string());
-        form = form.text("urls", urls.join("%0A"));
+        let form = multipart::Form::new()
+            .text("hash", hash.to_string())
+            .text("urls", urls.join("%0A"));
 
         self._post("torrents/addTrackers")
             .await?
@@ -455,10 +423,10 @@ impl super::Api {
         orig_url: &str,
         new_url: &str,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hash", hash.to_string());
-        form = form.text("origUrl", orig_url.to_string());
-        form = form.text("newUrl", new_url.to_string());
+        let form = multipart::Form::new()
+            .text("hash", hash.to_string())
+            .text("origUrl", orig_url.to_string())
+            .text("newUrl", new_url.to_string());
 
         self._post("torrents/editTracker")
             .await?
@@ -484,9 +452,9 @@ impl super::Api {
         hash: &str,
         urls: Vec<&str>,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hash", hash.to_string());
-        form = form.text("urls", urls.join("|"));
+        let form = multipart::Form::new()
+            .text("hash", hash.to_string())
+            .text("urls", urls.join("|"));
 
         self._post("torrents/removeTrackers")
             .await?
@@ -508,9 +476,9 @@ impl super::Api {
     /// * `peers` - The peer to add. Each peer is a colon-separated `host:port`.
     ///
     pub async fn add_peers(&self, hashes: Vec<&str>, peers: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hashes", hashes.join("|"));
-        form = form.text("peers", peers.join("|"));
+        let form = multipart::Form::new()
+            .text("hashes", hashes.join("|"))
+            .text("peers", peers.join("|"));
 
         self._post("torrents/addPeers")
             .await?
@@ -532,12 +500,7 @@ impl super::Api {
     ///   If `None` all torrents are selected.
     ///
     pub async fn increase_priority(&self, hashes: Option<Vec<&str>>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
+        let form = multipart::Form::new().text("hashes", hashes.unwrap_or(vec!["all"]).join("|"));
 
         self._post("torrents/increasePrio")
             .await?
@@ -559,12 +522,7 @@ impl super::Api {
     ///   If `None` all torrents are selected.
     ///
     pub async fn decrease_priority(&self, hashes: Option<Vec<&str>>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
+        let form = multipart::Form::new().text("hashes", hashes.unwrap_or(vec!["all"]).join("|"));
 
         self._post("torrents/decreasePrio")
             .await?
@@ -586,12 +544,7 @@ impl super::Api {
     ///   If `None` all torrents are selected.
     ///
     pub async fn max_priority(&self, hashes: Option<Vec<&str>>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
+        let form = multipart::Form::new().text("hashes", hashes.unwrap_or(vec!["all"]).join("|"));
 
         self._post("torrents/topPrio")
             .await?
@@ -613,12 +566,7 @@ impl super::Api {
     ///   If `None` all torrents are selected.
     ///
     pub async fn min_priority(&self, hashes: Option<Vec<&str>>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
+        let form = multipart::Form::new().text("hashes", hashes.unwrap_or(vec!["all"]).join("|"));
 
         self._post("torrents/bottomPrio")
             .await?
@@ -646,17 +594,17 @@ impl super::Api {
         file_ids: Vec<u64>,
         priority: FilePriority,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hash", hash.to_string());
-        form = form.text(
-            "id",
-            file_ids
-                .iter()
-                .map(|&num| num.to_string())
-                .collect::<Vec<String>>()
-                .join("|"),
-        );
-        form = form.text("priority", serde_json::to_string(&priority)?);
+        let form = multipart::Form::new()
+            .text("hash", hash.to_string())
+            .text("priority", serde_json::to_string(&priority)?)
+            .text(
+                "id",
+                file_ids
+                    .iter()
+                    .map(|&num| num.to_string())
+                    .collect::<Vec<String>>()
+                    .join("|"),
+            );
 
         self._post("torrents/filePrio")
             .await?
@@ -681,12 +629,7 @@ impl super::Api {
         &self,
         hashes: Option<Vec<&str>>,
     ) -> Result<HashMap<String, u64>, Error> {
-        let mut query = vec![];
-        if let Some(hashes) = hashes {
-            query.push(("hashes", hashes.join("|")));
-        } else {
-            query.push(("hashes", "all".to_string()));
-        }
+        let query = vec![("hashes", hashes.unwrap_or(vec!["all"]).join("|"))];
 
         let limites = self
             ._get("torrents/downloadLimit")
@@ -716,13 +659,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         limit: u64,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("limit", limit.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("limit", limit.to_string());
 
         self._post("torrents/setDownloadLimit")
             .await?
@@ -757,18 +696,14 @@ impl super::Api {
         seeding_time_limit: i64,
         inactive_seeding_time_limit: i64,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("ratioLimit", ratio_limit.to_string());
-        form = form.text("seedingTimeLimit", seeding_time_limit.to_string());
-        form = form.text(
-            "inactiveSeedingTimeLimit",
-            inactive_seeding_time_limit.to_string(),
-        );
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("ratioLimit", ratio_limit.to_string())
+            .text("seedingTimeLimit", seeding_time_limit.to_string())
+            .text(
+                "inactiveSeedingTimeLimit",
+                inactive_seeding_time_limit.to_string(),
+            );
 
         self._post("torrents/setShareLimits")
             .await?
@@ -793,12 +728,7 @@ impl super::Api {
         &self,
         hashes: Option<Vec<&str>>,
     ) -> Result<HashMap<String, i64>, Error> {
-        let mut query = vec![];
-        if let Some(hashes) = hashes {
-            query.push(("hashes", hashes.join("|")));
-        } else {
-            query.push(("hashes", "all".to_string()));
-        }
+        let query = vec![("hashes", hashes.unwrap_or(vec!["all"]).join("|"))];
 
         let limites = self
             ._get("torrents/uploadLimit")
@@ -828,13 +758,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         limit: u64,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("limit", limit.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("limit", limit.to_string());
 
         self._post("torrents/setUploadLimit")
             .await?
@@ -861,13 +787,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         location: &str,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("location", location.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("location", location.to_string());
 
         self._post("torrents/setLocation")
             .await?
@@ -889,9 +811,9 @@ impl super::Api {
     /// * `name` - Location to download the torrent to.
     ///
     pub async fn set_name(&self, hash: &str, name: &str) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hash", hash.to_string());
-        form = form.text("name", name.to_string());
+        let form = multipart::Form::new()
+            .text("hash", hash.to_string())
+            .text("name", name.to_string());
 
         self._post("torrents/setLocation")
             .await?
@@ -918,13 +840,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         category: &str,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("category", category.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("category", category.to_string());
 
         self._post("torrents/setCategory")
             .await?
@@ -963,9 +881,9 @@ impl super::Api {
     /// * `save_path` - Path to download torrents for the category.
     ///
     pub async fn create_category(&self, category: &str, save_path: &str) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("category", category.to_string());
-        form = form.text("savePath", save_path.to_string());
+        let form = multipart::Form::new()
+            .text("category", category.to_string())
+            .text("savePath", save_path.to_string());
 
         self._post("torrents/createCategory")
             .await?
@@ -987,9 +905,9 @@ impl super::Api {
     /// * `save_path` - Path to download torrents for the category.
     ///
     pub async fn edit_category(&self, category: &str, save_path: &str) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("category", category.to_string());
-        form = form.text("savePath", save_path.to_string());
+        let form = multipart::Form::new()
+            .text("category", category.to_string())
+            .text("savePath", save_path.to_string());
 
         self._post("torrents/editCategory")
             .await?
@@ -1010,8 +928,7 @@ impl super::Api {
     /// * `categories` - List of category names to remove.
     ///
     pub async fn remove_categories(&self, categories: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("categories", categories.join("\n"));
+        let form = multipart::Form::new().text("categories", categories.join("\n"));
 
         self._post("torrents/removeCategories")
             .await?
@@ -1034,13 +951,9 @@ impl super::Api {
     /// * `tags` - List of names for the tags you want to set.
     ///
     pub async fn add_tags(&self, hashes: Option<Vec<&str>>, tags: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("tags", tags.join(","));
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("tags", tags.join(","));
 
         self._post("torrents/addTags")
             .await?
@@ -1067,13 +980,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         tags: Vec<&str>,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("tags", tags.join(","));
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("tags", tags.join(","));
 
         self._post("torrents/removeTags")
             .await?
@@ -1111,8 +1020,7 @@ impl super::Api {
     /// * `tags` - List of tags to create.
     ///
     pub async fn create_tags(&self, tags: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("tags", tags.join(","));
+        let form = multipart::Form::new().text("tags", tags.join(","));
 
         self._post("torrents/createTags")
             .await?
@@ -1133,8 +1041,7 @@ impl super::Api {
     /// * `tags` - List of tags to delete.
     ///
     pub async fn torrent_delete_tags(&self, tags: Vec<&str>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("tags", tags.join(","));
+        let form = multipart::Form::new().text("tags", tags.join(","));
 
         self._post("torrents/deleteTags")
             .await?
@@ -1161,13 +1068,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         enable: bool,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("enable", enable.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("enable", enable.to_string());
 
         self._post("torrents/setAutoManagement")
             .await?
@@ -1189,12 +1092,7 @@ impl super::Api {
     ///   If `None` all torrents are selected.
     ///
     pub async fn toggle_sequential_download(&self, hashes: Option<Vec<&str>>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
+        let form = multipart::Form::new().text("hashes", hashes.unwrap_or(vec!["all"]).join("|"));
 
         self._post("torrents/toggleSequentialDownload")
             .await?
@@ -1216,12 +1114,7 @@ impl super::Api {
     ///   If `None` all torrents are selected.
     ///
     pub async fn toggle_first_last_priority(&self, hashes: Option<Vec<&str>>) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
+        let form = multipart::Form::new().text("hashes", hashes.unwrap_or(vec!["all"]).join("|"));
 
         self._post("torrents/toggleFirstLastPiecePrio")
             .await?
@@ -1248,13 +1141,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         enable: bool,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("value", enable.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("value", enable.to_string());
 
         self._post("torrents/setForceStart")
             .await?
@@ -1281,13 +1170,9 @@ impl super::Api {
         hashes: Option<Vec<&str>>,
         enable: bool,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        if let Some(hashes) = hashes {
-            form = form.text("hashes", hashes.join("|"));
-        } else {
-            form = form.text("hashes", "all".to_string());
-        }
-        form = form.text("value", enable.to_string());
+        let form = multipart::Form::new()
+            .text("hashes", hashes.unwrap_or(vec!["all"]).join("|"))
+            .text("value", enable.to_string());
 
         self._post("torrents/setSuperSeeding")
             .await?
@@ -1315,10 +1200,10 @@ impl super::Api {
         old_path: &str,
         new_path: &str,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hash", hash.to_string());
-        form = form.text("oldPath", old_path.to_string());
-        form = form.text("newPath", new_path.to_string());
+        let form = multipart::Form::new()
+            .text("hash", hash.to_string())
+            .text("oldPath", old_path.to_string())
+            .text("newPath", new_path.to_string());
 
         self._post("torrents/renameFile")
             .await?
@@ -1346,10 +1231,10 @@ impl super::Api {
         old_path: &str,
         new_path: &str,
     ) -> Result<(), Error> {
-        let mut form = multipart::Form::new();
-        form = form.text("hash", hash.to_string());
-        form = form.text("oldPath", old_path.to_string());
-        form = form.text("newPath", new_path.to_string());
+        let form = multipart::Form::new()
+            .text("hash", hash.to_string())
+            .text("oldPath", old_path.to_string())
+            .text("newPath", new_path.to_string());
 
         self._post("torrents/renameFolder")
             .await?

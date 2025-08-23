@@ -3,8 +3,11 @@ use std::collections::HashMap;
 use bytes::Bytes;
 
 use crate::{
-    Error,
-    models::{TorrentCreator, TorrentCreatorTask, TorrentCreatorTaskStatus},
+    Error, insert_optional,
+    models::{
+        TorrentCreator, TorrentCreatorTask, TorrentCreatorTaskStatus, TorrentFormat,
+        TorrentPieceSize,
+    },
 };
 
 impl super::Api {
@@ -14,39 +17,41 @@ impl super::Api {
         form.insert("sourcePath", params.source_path.clone());
 
         // apparently all of these are optional...
-        if let Some(format) = &params.format {
-            form.insert("format", format.to_string());
-        }
-        if let Some(piece) = &params.piece_size {
-            form.insert("pieceSize", piece.0.to_string());
-        }
-        if let Some(optimize) = &params.optimize_alignment {
-            form.insert("optimizeAlignment", optimize.to_string());
-        }
-        if let Some(padded_limit) = &params.padded_file_size_limit {
-            form.insert("paddedFileSizeLimit", padded_limit.to_string());
-        }
-        if let Some(private) = params.private {
-            form.insert("private", private.to_string());
-        }
-        if let Some(seeding) = params.start_seeding {
-            form.insert("startSeeding", seeding.to_string());
-        }
-        if let Some(file_path) = &params.torrent_file_path {
-            form.insert("torrentFilePath", file_path.clone());
-        }
-        if let Some(trackers) = &params.trackers {
-            form.insert("trackers", trackers.join("|"));
-        }
-        if let Some(seeds) = &params.url_seeds {
-            form.insert("urlSeeds", seeds.join("|"));
-        }
-        if let Some(source) = &params.source {
-            form.insert("source", source.clone());
-        }
-        if let Some(comment) = &params.comment {
-            form.insert("comment", comment.clone());
-        }
+        insert_optional!(form, "private", params.private, |v: bool| v.to_string());
+        insert_optional!(form, "comment", &params.comment, |v: &String| v.to_owned());
+        insert_optional!(form, "source", &params.source, |v: &String| v.to_owned());
+        insert_optional!(form, "startSeeding", params.start_seeding, |v: bool| v
+            .to_string());
+        insert_optional!(form, "trackers", &params.trackers, |v: &Vec<String>| v
+            .join("|"));
+        insert_optional!(form, "urlSeeds", &params.url_seeds, |v: &Vec<String>| v
+            .join("|"));
+        insert_optional!(form, "format", &params.format, |v: &TorrentFormat| v
+            .to_string());
+        insert_optional!(
+            form,
+            "pieceSize",
+            &params.piece_size,
+            |v: &TorrentPieceSize| v.0.to_string()
+        );
+        insert_optional!(
+            form,
+            "optimizeAlignment",
+            params.optimize_alignment,
+            |v: bool| v.to_string()
+        );
+        insert_optional!(
+            form,
+            "paddedFileSizeLimit",
+            params.padded_file_size_limit,
+            |v: i64| v.to_string()
+        );
+        insert_optional!(
+            form,
+            "torrentFilePath",
+            &params.torrent_file_path,
+            |v: &String| v.to_owned()
+        );
 
         Ok(self
             ._post("torrentcreator/addTask")
