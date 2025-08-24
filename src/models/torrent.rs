@@ -78,7 +78,8 @@ pub struct Torrent {
     /// Number of seeds connected to
     pub num_seeds: i64,
     /// Popularity of the torrent
-    pub popularity: f64,
+    /// See https://www.reddit.com/r/qBittorrent/comments/18t82wi/adding_the_popularity_metric_to_qbittorrent/ for more info.
+    pub popularity: Option<f64>,
     /// Torrent priority. Returns -1 if queuing is disabled or torrent is in seed mode
     pub priority: i64,
     /// True if torrent is from a private tracker (added in 5.0.0)
@@ -203,7 +204,7 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
             num_incomplete: i64,
             num_leechs: i64,
             num_seeds: i64,
-            popularity: f64,
+            popularity: Option<f64>,
             priority: i64,
             private: Option<bool>,
             progress: f32,
