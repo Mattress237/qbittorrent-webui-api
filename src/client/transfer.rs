@@ -17,7 +17,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -41,8 +41,6 @@ impl super::Api {
 
     /// Get alternative speed limits state
     ///
-    /// The response is 1 if alternative speed limits are enabled, 0 otherwise.
-    ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-alternative-speed-limits-state)
     ///
     /// # Example
@@ -53,7 +51,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -87,7 +85,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -118,7 +116,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -156,7 +154,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -190,7 +188,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -228,7 +226,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -256,7 +254,7 @@ impl super::Api {
     ///
     /// # Arguments
     ///
-    /// * `peers` - The peer to ban, or multiple peers. Each peer is a colon-separated `host:port`
+    /// * `peers` - The peer to ban, or multiple peers. Each peer is `host:port`
     ///
     /// # Example
     ///
@@ -266,7 +264,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///

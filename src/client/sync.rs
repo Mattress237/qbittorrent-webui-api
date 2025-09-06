@@ -23,7 +23,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -53,7 +53,7 @@ impl super::Api {
 
     /// Get torrent peers data
     ///
-    /// Fetches main data changes since the last request. If the given `rid` is different from the one of last server reply,
+    /// Fetches peer data changes since the last request. If the given `rid` is different from the one of last server reply,
     /// `full_update` will be `true`
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-torrent-peers-data)
@@ -71,7 +71,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///

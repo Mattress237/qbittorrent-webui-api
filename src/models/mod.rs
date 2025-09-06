@@ -28,10 +28,13 @@ pub use transfer::*;
 /// Connection status of the Qbit application
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum ConnectionStatus {
+    /// The client is connected to the other cliet / server
     #[serde(rename = "connected")]
     Connected,
+    /// The client is connected to the other cliet / server but through a firewall
     #[serde(rename = "firewalled")]
     Firewalled,
+    /// The client is not connected to the other cliet / server (or was and then disconnectede)
     #[serde(rename = "disconnected")]
     #[default]
     Disconnected,

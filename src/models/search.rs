@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// Information about a search job.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Search {
     /// ID of the search job
@@ -10,13 +11,17 @@ pub struct Search {
     pub total: u64,
 }
 
+/// The status of the search job
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum SearchStatus {
+    /// The search job active looking for results
     Running,
+    /// The search job has finished / failed / user stopped.
     #[default]
     Stopped,
 }
 
+/// Results of the provided search id.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchResult {
     /// List of `SearchResultItem`.
@@ -27,6 +32,7 @@ pub struct SearchResult {
     pub total: u64,
 }
 
+/// An individual item that has been found.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchResultItem {
     /// URL pointing to the torrent's description page on the source site.
@@ -52,6 +58,7 @@ pub struct SearchResultItem {
     pub site_url: String,
 }
 
+/// Information about a specific plugin used to search.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchPlugin {
     /// Whether the plugin is enabled.
@@ -70,6 +77,7 @@ pub struct SearchPlugin {
     pub version: String,
 }
 
+/// Information about the category the search plugin comes under.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct SearchCategory {
     /// Identifier for the category (e.g., "all", "books", "tv").

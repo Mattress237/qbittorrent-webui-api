@@ -44,10 +44,14 @@ impl Api {
         Ok(url)
     }
 
+    /// Returns the current session identifier cookie (if it exists).
     pub async fn get_sid_cookie(&self) -> Option<String> {
         self.state.read().await.as_cookie()
     }
 
+    /// Sets the current session identifier cookie.
+    ///
+    /// This will also change the state of the client.
     pub async fn set_sid_cookie(&mut self, value: impl Into<&str>) -> Result<(), Error> {
         let new_state = self.state.read().await.add_cookie(value.into());
 

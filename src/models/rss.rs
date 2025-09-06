@@ -63,6 +63,7 @@ pub struct RssArticle {
     date: String,
 }
 
+/// Information about a specific rule to use within rss feeds.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct RssRule {
     /// Whether the rule is enabled

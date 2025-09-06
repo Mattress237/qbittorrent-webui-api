@@ -8,7 +8,7 @@ use crate::{
 };
 
 impl super::Api {
-    /// Add RSS folder
+    /// Add RSS folder to help categorise torrents.
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#add-folder)
     ///
@@ -24,7 +24,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -62,12 +62,14 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
+    ///     client.rss_add_folder("folder").await.unwrap();
+    ///
     ///     let feed = "http://thepiratebay.org/rss//top100/200";
-    ///     let result = client.rss_add_feed(feed, Some("add\\it\\here")).await;
+    ///     let result = client.rss_add_feed(feed, Some("folder")).await;
     ///
     ///     assert!(result.is_ok());
     /// }
@@ -88,9 +90,7 @@ impl super::Api {
         Ok(())
     }
 
-    /// Remove RSS item
-    ///
-    /// Removes folder or feed.
+    /// Removes folder or rss feed.
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#remove-item)
     ///
@@ -105,7 +105,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -127,8 +127,6 @@ impl super::Api {
         Ok(())
     }
 
-    /// Move RSS item
-    ///
     /// Moves/renames folder or feed.
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#move-item)
@@ -145,7 +143,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -175,7 +173,7 @@ impl super::Api {
     ///
     /// # Arguments
     ///
-    /// * `withData` - True if you need current feed articles
+    /// * `withData` - Also return the articles of every feed.
     ///
     /// # Returns
     /// A `HashMap` where the keys are feed names and the values are `RssFeedCollection` objects.
@@ -190,7 +188,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -220,7 +218,7 @@ impl super::Api {
         Ok(feed)
     }
 
-    /// Mark as read
+    /// Mark article / folder / feed as read
     ///
     /// If `article_id` is set only the article is marked as read otherwise the whole
     /// feed is going to be marked as read.
@@ -239,7 +237,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -264,8 +262,6 @@ impl super::Api {
         Ok(())
     }
 
-    /// Refresh RSS item
-    ///
     /// Refreshes folder or feed.
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#refresh-item)
@@ -281,7 +277,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -320,7 +316,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -361,7 +357,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -400,7 +396,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -434,7 +430,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -458,7 +454,7 @@ impl super::Api {
         Ok(rules)
     }
 
-    /// Get all RSS rules articles
+    /// Get all articles matching the given rule.
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-all-articles-matching-a-rule)
     ///
@@ -473,7 +469,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///

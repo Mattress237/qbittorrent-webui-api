@@ -18,15 +18,11 @@ pub struct TransferInfo {
     /// Download rate limit (bytes/s)
     pub dl_rate_limit: i64,
     /// Upload rate limit (bytes/s)
-    pub dht_nodes: i64,
+    pub ul_rate_limit: i64,
     /// DHT nodes connected to
+    pub dht_nodes: i64,
+    /// The connection status of qbitt.
     pub connection_status: ConnectionStatus,
-    /// True if torrent queueing is enabled
-    pub queueing: Option<bool>,
-    /// True if alternative speed limits are enabled
-    pub use_alt_speed_limits: Option<bool>,
-    /// Transfer list refresh interval (milliseconds)
-    pub refresh_interval: Option<bool>,
     /// Last external IPv4 address
     ///
     /// This field has not been documented in the API!

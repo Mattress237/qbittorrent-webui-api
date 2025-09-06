@@ -481,7 +481,7 @@ pub struct TorrentContent {
     pub progress: f64,
     /// File priority.
     pub priority: FilePriority,
-    /// True if file is seeding/complete
+    /// Is file seeding / completed.
     pub is_seed: Option<bool>,
     /// The first number is the starting piece index and the second number is the ending piece index (inclusive)
     pub piece_range: Vec<i64>,
@@ -508,8 +508,11 @@ pub enum FilePriority {
 #[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
 #[repr(u8)]
 pub enum PiecesState {
+    /// The piece has not yet been downloaded
     #[default]
     NotDownloaded = 0,
+    /// The piece is in the progress of being downloaded
     Downloading = 1,
+    /// The piece has been downloaded.
     Downloaded = 2,
 }

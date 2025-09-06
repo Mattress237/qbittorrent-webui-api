@@ -19,7 +19,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -27,6 +27,7 @@ impl super::Api {
     ///     let result = client.create_task(&torrent).await;
     ///
     ///     assert!(result.is_ok());
+    ///     println!("{}", result.ok().unwrap().task_id);
     /// }
     /// ```
     pub async fn create_task(&self, params: &TorrentCreator) -> Result<TorrentCreatorTask, Error> {
@@ -89,7 +90,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -111,7 +112,7 @@ impl super::Api {
             .await?)
     }
 
-    /// Get the `.torrent` file for a given task id. (Task must have finished)
+    /// Get the `.torrent` file for a given task id. (Task must be finished)
     ///
     /// # Example
     ///
@@ -122,7 +123,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -165,15 +166,18 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
+    /// use qbit::models::TorrentCreator;
     ///
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
-    ///     let result = client.delete_task("task_id".to_string()).await;
+    ///     let torrent = TorrentCreator::default();
+    ///     let torrent_task = client.create_task(&torrent).await.unwrap();
+    ///     let result = client.delete_task(torrent_task).await;
     ///
     ///     assert!(result.is_ok());
     /// }

@@ -3,9 +3,7 @@ use reqwest::header::{self};
 use crate::{Credentials, LoginState, error::Error};
 
 impl super::Api {
-    /// Create a new API instance and login to the service.
-    ///
-    /// This method allows you to create a new API instance and login using the provided credentials.s
+    /// Create a new API instance and login to qbittorrent with the provided credentials.
     ///
     /// # Arguments
     /// * `url` - The base URL of the API service.
@@ -19,7 +17,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     /// }
@@ -36,7 +34,7 @@ impl super::Api {
         Ok(api)
     }
 
-    /// Create a new API instance and login to the service with username and password.
+    /// Create a new API instance and login to the service with the provided username and password.
     ///
     /// # Arguments
     /// * `url` - The base URL of the API service.
@@ -50,7 +48,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Api::new_login_username_password("url", "username", "password")
+    ///     let client = Api::new_login_username_password("http://127.0.0.1/", "username", "password")
     ///         .await
     ///         .unwrap();
     /// }
@@ -84,7 +82,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let mut client = Api::new_login("url", credentials)
+    ///     let mut client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -161,9 +159,7 @@ impl super::Api {
         Ok(())
     }
 
-    /// Login to the service.
-    ///
-    /// This method allows you to create a new API instance and login using an existing SID cookie.
+    /// Login to the service by providing an existing valid SID (Session identifier) cookie.
     ///
     /// # Arguments
     /// * `url` - The base URL of the API service.
@@ -176,7 +172,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Api::new_from_cookie("url", "cookie")
+    ///     let client = Api::new_from_cookie("http://127.0.0.1/", "cookie")
     ///         .await
     ///         .unwrap();
     /// }
@@ -211,7 +207,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1", credentials)
     ///         .await
     ///         .unwrap();
     ///
