@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::models::{ConnectionStatus, TorrentsMap};
+use crate::utilities::{deserializers, serializers};
 
 /// Main response data object
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
@@ -66,8 +67,8 @@ pub struct ServerState {
     pub free_space_on_disk: i64,
     /// Global ratio
     #[serde(
-        deserialize_with = "deserialize_string_to_f64",
-        serialize_with = "serialize_f64_to_string"
+        deserialize_with = "deserializers::deserialize_string_to_f64",
+        serialize_with = "serializers::serialize_f64_to_string"
     )]
     pub global_ratio: f64,
     /// Last external IPv4 address
@@ -80,16 +81,16 @@ pub struct ServerState {
     pub queueing: bool,
     /// How many times the read cache has been hit
     #[serde(
-        deserialize_with = "deserialize_string_to_u64",
-        serialize_with = "serialize_u64_to_string"
+        deserialize_with = "deserializers::deserialize_string_to_u64",
+        serialize_with = "serializers::serialize_u64_to_string"
     )]
     pub read_cache_hits: u64,
     /// How overloaded is the read cache.
     ///
     /// Calculated by read queue size / peer count
     #[serde(
-        deserialize_with = "deserialize_string_to_u64",
-        serialize_with = "serialize_u64_to_string"
+        deserialize_with = "deserializers::deserialize_string_to_u64",
+        serialize_with = "serializers::serialize_u64_to_string"
     )]
     pub read_cache_overload: u64,
     /// Refresh Interval
@@ -120,40 +121,10 @@ pub struct ServerState {
     ///
     /// Calculated by write queue size / peer count
     #[serde(
-        deserialize_with = "deserialize_string_to_u64",
-        serialize_with = "serialize_u64_to_string"
+        deserialize_with = "deserializers::deserialize_string_to_u64",
+        serialize_with = "serializers::serialize_u64_to_string"
     )]
     pub write_cache_overload: u64,
-}
-
-fn deserialize_string_to_f64<'de, D>(deserializer: D) -> Result<f64, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    s.parse::<f64>().map_err(serde::de::Error::custom)
-}
-
-fn serialize_f64_to_string<S>(value: &f64, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    serializer.serialize_str(&value.to_string())
-}
-
-fn deserialize_string_to_u64<'de, D>(deserializer: D) -> Result<u64, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    s.parse::<u64>().map_err(serde::de::Error::custom)
-}
-
-fn serialize_u64_to_string<S>(value: &u64, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    serializer.serialize_str(&value.to_string())
 }
 
 /// Peers response data object.
