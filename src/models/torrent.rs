@@ -163,7 +163,7 @@ pub struct Torrent {
     pub total_size: i64,
     /// The first tracker with working status. Returns empty string if no tracker is working.
     pub tracker: String,
-    /// Totall count of trackers
+    /// Total count of trackers
     pub trackers_count: i64,
     /// Torrent upload speed limit (bytes/s). -1 if unlimited.
     pub up_limit: i64,
