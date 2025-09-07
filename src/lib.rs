@@ -32,7 +32,7 @@
 
 mod client;
 mod error;
-pub(crate) mod utiles;
+pub(crate) mod utilities;
 
 /// Data object models.
 pub mod models;

@@ -19,7 +19,7 @@ cargo add qbit
 Add it manually:
 ``` toml
 [dependencies]
-qbit = "0.1"
+qbit = "0.2"
 ```
 
 Basic usage to get all torrents:
