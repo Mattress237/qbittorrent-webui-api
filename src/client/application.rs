@@ -10,7 +10,7 @@ use crate::{
 impl super::Api {
     /// Get Qbittorrent application version
     ///
-    /// The response is a string withe the application version, e.g. `v5.1.0`
+    /// The response is a string with the application version, e.g. `v5.1.0`
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-application-version)
     ///
@@ -314,7 +314,7 @@ impl super::Api {
     ///         .unwrap();
     ///
     ///     let cookie = Cookie::default();
-    ///     let result = client.cookies().await;
+    ///     let result = client.set_cookies(vec![cookie]).await;
     ///
     ///     assert!(result.is_ok());
     /// }
@@ -347,7 +347,7 @@ impl super::Api {
     ///         .await
     ///         .unwrap();
     ///
-    ///     let contents = client.get_directory_contents("dir_path", &DirMode::All)
+    ///     let contents = client.get_directory_contents("/path/to/some/file", &DirMode::All)
     ///         .await
     ///         .unwrap();
     ///
