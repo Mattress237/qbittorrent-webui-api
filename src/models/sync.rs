@@ -67,8 +67,8 @@ pub struct ServerState {
     pub free_space_on_disk: i64,
     /// Global ratio
     #[serde(
-        deserialize_with = "deserializers::deserialize_string_to_f64",
-        serialize_with = "serializers::serialize_f64_to_string"
+        deserialize_with = "deserializers::string_to_f64",
+        serialize_with = "serializers::f64_to_string"
     )]
     pub global_ratio: f64,
     /// Last external IPv4 address
@@ -81,16 +81,16 @@ pub struct ServerState {
     pub queueing: bool,
     /// How many times the read cache has been hit
     #[serde(
-        deserialize_with = "deserializers::deserialize_string_to_u64",
-        serialize_with = "serializers::serialize_u64_to_string"
+        deserialize_with = "deserializers::string_to_u64",
+        serialize_with = "serializers::u64_to_string"
     )]
     pub read_cache_hits: u64,
     /// How overloaded is the read cache.
     ///
     /// Calculated by read queue size / peer count
     #[serde(
-        deserialize_with = "deserializers::deserialize_string_to_u64",
-        serialize_with = "serializers::serialize_u64_to_string"
+        deserialize_with = "deserializers::string_to_u64",
+        serialize_with = "serializers::u64_to_string"
     )]
     pub read_cache_overload: u64,
     /// Refresh Interval
@@ -121,8 +121,8 @@ pub struct ServerState {
     ///
     /// Calculated by write queue size / peer count
     #[serde(
-        deserialize_with = "deserializers::deserialize_string_to_u64",
-        serialize_with = "serializers::serialize_u64_to_string"
+        deserialize_with = "deserializers::string_to_u64",
+        serialize_with = "serializers::u64_to_string"
     )]
     pub write_cache_overload: u64,
 }

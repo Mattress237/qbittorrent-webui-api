@@ -21,7 +21,7 @@ where
     Ok(value.unwrap_or_default())
 }
 
-pub fn deserialize_string_to_f64<'de, D>(deserializer: D) -> Result<f64, D::Error>
+pub fn string_to_f64<'de, D>(deserializer: D) -> Result<f64, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
@@ -29,7 +29,7 @@ where
     s.parse::<f64>().map_err(serde::de::Error::custom)
 }
 
-pub fn deserialize_string_to_u64<'de, D>(deserializer: D) -> Result<u64, D::Error>
+pub fn string_to_u64<'de, D>(deserializer: D) -> Result<u64, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
