@@ -7,7 +7,7 @@ use serde::{
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::parameters::TorrentState;
-use crate::utiles::deserializers;
+use crate::utilities::deserializers;
 
 /// Represents a torrent and its associated metadata.
 ///
