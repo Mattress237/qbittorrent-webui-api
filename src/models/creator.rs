@@ -54,9 +54,13 @@ pub struct TorrentCreator {
     /// Note: If piece size is too big this can cause the torrent to fail to be added.
     #[builder(setter(into, strip_option), default)]
     pub piece_size: Option<TorrentPieceSize>,
+    /// Should optimize alignment
     #[builder(default = Some(false))]
     pub optimize_alignment: Option<bool>,
-    /// -1 = disable
+    /// Size limit for padding files
+    ///
+    /// Used with other clients that are not `LibTorrent2`, shouldn't need to be
+    /// changed unless the client is different.
     #[builder(setter(into, strip_option), default = Some(-1))]
     pub padded_file_size_limit: Option<i64>,
     /// Is the torrent private or not? (Won't distrubte on DHT network if private.)
@@ -74,6 +78,9 @@ pub struct TorrentCreator {
     /// List of url seeds
     #[builder(setter(into, strip_option), default)]
     pub url_seeds: Option<Vec<String>>,
+    /// Source metadata field.
+    ///
+    /// Used for cross-seeding by some private trackers
     #[builder(setter(into, strip_option), default)]
     pub source: Option<String>,
     /// A comment to attach to the torrent.
@@ -81,6 +88,9 @@ pub struct TorrentCreator {
     pub comment: Option<String>,
 }
 
+/// A wrapper of a string, used to store the task_id just created.
+///
+/// Usages should be like a normal string.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct TorrentCreatorTask {
     /// The task id related to the torrent just created
@@ -206,9 +216,13 @@ impl TorrentPieceSize {
 /// The current status of the task
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum TaskStatus {
+    /// The task failed to complete, see `error_message` of `TorrentCreatorTaskStatus` for the reason why
     Failed,
+    /// The task is in the queue waiting to be processed
     Queued,
+    /// The task is current being processed
     Running,
+    /// The task has finished processing successfully.
     Finished,
 }
 

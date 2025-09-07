@@ -25,10 +25,14 @@ pub struct LogItem {
 #[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
 #[repr(u8)]
 pub enum LogType {
+    /// Include normal messages
     #[default]
     Normal = 1,
+    /// Include Information messages
     Info = 2,
+    /// Include Warning messages
     Warning = 4,
+    /// Include Critical messages
     Critical = 8,
 }
 

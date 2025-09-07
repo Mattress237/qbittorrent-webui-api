@@ -12,16 +12,16 @@ use crate::models::ContentLayout;
 /// Torrent List/info parameter object
 #[derive(Debug, Default, Builder, Clone, Deserialize, Serialize, PartialEq)]
 pub struct TorrentListParams {
-    /// Filter torrent list by state. Allowed state filters: TorrentState
+    /// Filter torrent list by state. See FilterTorrentState for the allowed filters.
     #[builder(setter(strip_option), default)]
     pub filter: Option<FilterTorrentState>,
     /// Get torrents with the given category (empty string means "without category"; no "category" parameter means "any category"). Remember to URL-encode the category name. For example, `My category` becomes `My%20category`
     #[builder(setter(into, strip_option), default)]
     pub category: Option<String>,
-    /// Get torrents with the given tag (empty string means "without tag"; no "tag" parameter means "any tag". Remember to URL-encode the category name. For example, `My tag` becomes `My%20tag`
+    /// Get torrents with the given tag (empty string means "without tag"; no "tag" parameter means "any tag"). Remember to URL-encode the category name. For example, `My tag` becomes `My%20tag`
     #[builder(setter(into, strip_option), default)]
     pub tag: Option<String>,
-    /// Sort torrents by given key. They can be sorted using any field of the response's JSON array (which are documented below) as the sort key.
+    /// Sort torrents by given key. They can be sorted using any field of the response's JSON array (see `TorrentSort`) as the sort key.
     #[builder(setter(strip_option), default)]
     pub sort: Option<TorrentSort>,
     /// Enable reverse sorting. Defaults to `false`
@@ -33,7 +33,7 @@ pub struct TorrentListParams {
     /// Set offset (if less than 0, offset from end)
     #[builder(setter(into, strip_option), default)]
     pub offset: Option<i64>,
-    /// Filter by hashes. Can contain multiple hashes separated by `|`
+    /// Filter by hashes.
     #[builder(setter(into, strip_option), default)]
     pub hashes: Option<Vec<String>>,
 }
@@ -41,18 +41,30 @@ pub struct TorrentListParams {
 /// Possible Torrent states that can be filtered.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum FilterTorrentState {
+    /// Every filter
     #[default]
     All,
+    /// Only torrents which are downloading
     Downloading,
+    /// Only torrents which are seeding
     Seeding,
+    /// Only torrents which are completed
     Completed,
+    /// Only torrents which are stopped
     Stopped,
+    /// Only torrents which are active (downloading, seeding, metadata, etc)
     Active,
+    /// Only torrents which are inactive (stopped, stalled, errored)
     Inactive,
+    /// Only torrents which are running (same as active, or checking disk files)
     Running,
+    /// Only torrents which are stalled (no data transfer, coverse both `StalledUploading` and `StalledDownloading`)
     Stalled,
+    /// Only torrents which are stalled uploading (not seeding any data)
     StalledUploading,
+    /// Only torrents which are stalled downloading (not receiving any dataa)
     StalledDownloading,
+    /// Only torrents which are errored. (Missing files, failed to write, etc)
     Errored,
 }
 
@@ -357,6 +369,7 @@ pub enum TorrentSort {
     Progress,
     /// Torrent share ratio.
     Ratio,
+    /// Maximum share ratio limit for the torrent
     RatioLimit,
     /// Time until the next tracker reannounce
     Reannounce,
@@ -504,22 +517,17 @@ pub struct AddTorrent {
     pub first_last_piece_prio: bool,
 }
 
-impl AddTorrent {
-    pub fn new() -> Self {
-        // Although Self::default() could work here, this is done as semi boiler plate for future things if need be.
-        Self {
-            ..Default::default()
-        }
-    }
-}
-
+/// The type of torrent to add. Either `magnet` links or `.torrent` files.
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum AddTorrentType {
+    /// Magnet links to add
     Links(Vec<String>),
+    /// Files to add
     Files(Vec<TorrentFile>),
 }
 
 impl AddTorrentType {
+    /// Checks to see if we have either urls/files. (Can't add a torrent without these)
     pub fn is_empty(&self) -> bool {
         match self {
             AddTorrentType::Links(items) => items.is_empty(),
@@ -558,8 +566,11 @@ impl Default for AddTorrentType {
     }
 }
 
+/// Information about the torrent file
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct TorrentFile {
+    /// Name of file
     pub filename: String,
+    /// Data stored in the file. (just fs::read would work)
     pub data: Vec<u8>,
 }

@@ -53,16 +53,24 @@ use serde::{Deserialize, Serialize};
 /// [Commit](https://github.com/George-Miao/qbit/commit/fe1240c05b4d3feeafb327e8ba7f0eeba97735c5#diff-b1a35a68f14e696205874893c07fd24fdb88882b47c23cc0e0c80a30c7d53759R28)
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum LoginState {
+    /// The user is logged in.
     LoggedIn {
+        /// Credentials used to log in.
         credentials: Credentials,
+        /// Session cookie used to log in.
         cookie_sid: String,
     },
+    /// The user is not logged in but we have credenitals.
     NotLoggedIn {
+        /// Credentials used to log in
         credentials: Credentials,
     },
-    CookieProvidet {
+    /// The user is not logged in but we have the cookie to log them in.
+    CookieProvided {
+        /// Session cookie used to log in.
         cookie_sid: String,
     },
+    /// We don't know if the user is logged in or not.
     #[default]
     Unknown,
 }
@@ -72,7 +80,7 @@ impl LoginState {
         match self {
             Self::LoggedIn { cookie_sid, .. } => Some(cookie_sid.to_string()),
             Self::NotLoggedIn { .. } => None,
-            Self::CookieProvidet { cookie_sid } => Some(cookie_sid.to_string()),
+            Self::CookieProvided { cookie_sid } => Some(cookie_sid.to_string()),
             Self::Unknown => None,
         }
     }
@@ -81,7 +89,7 @@ impl LoginState {
         let creds = match self {
             Self::LoggedIn { credentials, .. } => Some(credentials),
             Self::NotLoggedIn { credentials } => Some(credentials),
-            Self::CookieProvidet { .. } => return None,
+            Self::CookieProvided { .. } => return None,
             Self::Unknown => return None,
         };
 
@@ -102,10 +110,10 @@ impl LoginState {
                 cookie_sid: cookie.to_string(),
                 credentials: credentials.clone(),
             },
-            Self::CookieProvidet { .. } => Self::CookieProvidet {
+            Self::CookieProvided { .. } => Self::CookieProvided {
                 cookie_sid: cookie.to_string(),
             },
-            Self::Unknown => Self::CookieProvidet {
+            Self::Unknown => Self::CookieProvided {
                 cookie_sid: cookie.to_string(),
             },
         }
@@ -120,6 +128,7 @@ pub struct Credentials {
 }
 
 impl Credentials {
+    /// Create a new set of credentials with the provided username and password
     pub fn new(username: impl Into<String>, password: impl Into<String>) -> Self {
         Self {
             username: username.into(),

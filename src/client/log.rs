@@ -6,16 +6,14 @@ use crate::{
 };
 
 impl super::Api {
-    /// Get log
-    ///
-    /// Retrieves the main log of the qBittorrent application.
+    /// Retrieves the main log (application log)
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-log)
     ///
     /// # Arguments
     ///
     /// * `last_known_id` - Exclude messages with "message id" <= `last_known_id` (default: `-1`)
-    /// * `log_types` - List of desierd log types. (default: all)
+    /// * `log_types` - List of desierd log types. (default: all). Doesn't matter if multiple of the same type are provided as only one will be counted in the end.
     ///
     /// # Example
     ///
@@ -26,7 +24,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
@@ -66,9 +64,7 @@ impl super::Api {
         Ok(log)
     }
 
-    /// Get peer log
-    ///
-    /// Retrieves the peer log of the qBittorrent application.
+    /// Retrieves the peer log
     ///
     /// [official documentation](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)#get-peer-log)
     ///
@@ -84,7 +80,7 @@ impl super::Api {
     /// #[tokio::main]
     /// async fn main() {
     ///     let credentials = Credentials::new("username", "password");
-    ///     let client = Api::new_login("url", credentials)
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
     ///
