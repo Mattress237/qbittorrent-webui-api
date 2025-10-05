@@ -18,7 +18,7 @@ pub struct TransferInfo {
     /// Download rate limit (bytes/s)
     pub dl_rate_limit: i64,
     /// Upload rate limit (bytes/s)
-    pub ul_rate_limit: i64,
+    pub up_rate_limit: i64,
     /// DHT nodes connected to
     pub dht_nodes: i64,
     /// The connection status of qbitt.
