@@ -479,7 +479,7 @@ pub struct AddTorrent {
     /// Category for the torrent
     #[builder(setter(into, strip_option), default)]
     pub category: Option<String>,
-    /// Tags for the torrent, split by `,`
+    /// Tags for the torrent.
     #[builder(setter(into, strip_option), default)]
     pub tags: Option<Vec<String>>,
     /// Skip hash checking. Possible values are `true`, `false` (default)
