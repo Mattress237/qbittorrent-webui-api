@@ -1,6 +1,6 @@
 [package]
 name = "qbit"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "A wrapper for qBittorrent Web API"
 keywords = ["qbit", "qbittorrent", "api", "torrent"]
@@ -14,8 +14,8 @@ license = "MIT"
 [dependencies]
 reqwest = { version = "0.12.23", features = ["json", "multipart"] }
 tokio = { version = "1.47.1", features = ["sync"] }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.143"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
 serde_repr = "0.1.20"
 url = "2.5.7"
 derive_builder = "0.20.2"
