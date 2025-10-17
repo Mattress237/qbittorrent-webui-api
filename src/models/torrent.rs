@@ -438,7 +438,7 @@ pub struct Tracker {
     /// Tracker url
     pub url: String,
     /// Tracker status.
-    pub status: TrackerState,
+    pub status: TrackerStatus,
     /// Tracker priority tier. Lower tier trackers are tried before higher
     /// tiers. Tier numbers are valid when `>= 0`, `< 0` is used as placeholder
     /// when `tier` does not exist for special entries (such as DHT).
@@ -455,8 +455,9 @@ pub struct Tracker {
     pub msg: String,
 }
 
+/// Torrent tracker status
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
-pub enum TrackerState {
+pub enum TrackerStatus {
     /// Tracker is disabled (used for DHT, PeX, and LSD)
     #[default]
     Disabled = 0,
