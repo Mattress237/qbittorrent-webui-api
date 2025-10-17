@@ -37,6 +37,17 @@ where
     s.parse::<u64>().map_err(serde::de::Error::custom)
 }
 
+pub fn string_to_vec<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    Ok(s.split(",")
+        .map(|s| s.trim().to_owned())
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<String>>())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
