@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use qbit::{
     Api,
-    models::{Torrent, TorrentCreatorBuilder, TorrentCreatorTask},
+    models::{TaskStatus, Torrent, TorrentCreatorBuilder, TorrentCreatorTask},
     parameters::AddTorrentBuilder,
 };
 use rand::{Rng, distr::Alphabetic};
@@ -82,6 +82,18 @@ pub async fn get_debian_torrent(client: &Api) -> Option<Torrent> {
         .map(|t| t.to_owned())
 }
 
+/// Creates a random name for use in testing. This HEAVILY reduces the chances of tests failing due to using the same name, at the cost of slightly more compute but it's worth it.
+///
+/// Note: A `Some` is always returned, hence can be unwrapped without issue.
+///
+/// Usage:
+/// ```rs
+/// use crate::{create_random_name};
+///
+/// pub fn test() {
+///     let name = create_random_name().unwrap();
+/// }
+/// ```
 pub fn create_random_name() -> Option<String> {
     Some(
         rand::rng()
@@ -136,4 +148,34 @@ pub async fn create_dummy_torrent(
         .expect("Failed to build torrent creator");
 
     client.create_task(&torrent).await
+}
+
+pub async fn create_and_get_torrent(client: &Api, random_name: Option<String>) {
+    let task = create_dummy_torrent(client, random_name).await.unwrap();
+
+    let mut list = client.list_tasks().await.unwrap();
+    // This should hopefully let the torrent finish creating before attempting to do other stuff.
+    let mut limit = 10;
+    while list
+        .iter()
+        .filter(|v| v.task_id == task)
+        .next()
+        .unwrap()
+        .status
+        != TaskStatus::Finished
+    {
+        println!(
+            "{:?}",
+            list.iter().filter(|v| v.task_id == task).next().unwrap()
+        );
+        if limit == 0 {
+            panic!("Torrent has not finished creating after ~ 10 seconds of checking.");
+        }
+
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        list = client.list_tasks().await.unwrap();
+        limit -= 1;
+    }
+
+    client.torrent(hash)
 }
