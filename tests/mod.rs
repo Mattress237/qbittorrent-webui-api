@@ -92,6 +92,15 @@ pub fn create_random_name() -> Option<String> {
     )
 }
 
+/// Create dummy test data file structure
+///
+/// Note: The file provided in environment variables under `temp_dir` will be used as is.
+///     And will not have stuff, like directory checks performend on it.
+///
+/// # Arguments
+///
+/// * `random_name` - A random name to append to the file. Generate one with `create_random_name()`.
+///     The point is so that each individual test can have their own stuff without breaking others.
 pub fn create_test_data(random_name: Option<String>) -> String {
     dotenv().ok();
     // persionally did not want to have to do this, but `/tmp` can cause some issues so...
