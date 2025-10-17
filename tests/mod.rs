@@ -159,8 +159,10 @@ pub async fn create_dummy_torrent(
     client.create_task(&torrent).await
 }
 
-pub async fn create_and_get_torrent(client: &Api, random_name: Option<String>) {
-    let task = create_dummy_torrent(client, random_name).await.unwrap();
+pub async fn create_and_get_torrent(client: &Api, random_name: Option<String>) -> Torrent {
+    let task = create_dummy_torrent(client, random_name.clone())
+        .await
+        .unwrap();
 
     let mut list = client.list_tasks().await.unwrap();
     // This should hopefully let the torrent finish creating before attempting to do other stuff.
@@ -186,5 +188,15 @@ pub async fn create_and_get_torrent(client: &Api, random_name: Option<String>) {
         limit -= 1;
     }
 
-    client.torrent(hash)
+    // Annoyingly, qbit doesn't give us much in the ways of linking a torrent task with the actual torrent...
+
+    client
+        .torrents(None)
+        .await
+        .unwrap()
+        .iter()
+        .filter(|t| t.name == random_name.clone().unwrap())
+        .next()
+        .unwrap()
+        .to_owned()
 }

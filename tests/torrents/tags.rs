@@ -1,4 +1,4 @@
-use crate::{create_dummy_torrent, create_random_name, login_default_client};
+use crate::{create_and_get_torrent, create_random_name, login_default_client};
 
 #[tokio::test]
 #[ignore = "Test hits API endpoint"]
@@ -12,24 +12,29 @@ pub async fn create_empty_tags() {
 #[ignore = "Test hits API endpoint"]
 pub async fn create_random_tags() {
     let client = login_default_client().await;
-    let tags = vec![
-        create_random_name().unwrap(),
-        create_random_name().unwrap(),
-        create_random_name().unwrap(),
-    ];
 
     let result = client
-        .create_tags(tags.iter().map(|t| t.as_ref()).collect())
+        .create_tags(vec![
+            &create_random_name().unwrap(),
+            &create_random_name().unwrap(),
+            &create_random_name().unwrap(),
+        ])
         .await;
     assert!(result.is_ok());
 }
 
 #[tokio::test]
-#[ignore = "Test hits API endpoint"]
+// #[ignore = "Test hits API endpoint"]
 pub async fn create_dummy_with_tags() {
     let client = login_default_client().await;
-    let task = create_dummy_torrent(&client, create_random_name())
+    let random = create_random_name();
+    let torrent = create_and_get_torrent(&client, random).await;
+
+    client
+        .add_tags(
+            Some(vec![&torrent.hash]),
+            vec![&create_random_name().unwrap()],
+        )
         .await
         .unwrap();
-    let task_as_torrent = client.list_tasks().await.unwrap();
 }
