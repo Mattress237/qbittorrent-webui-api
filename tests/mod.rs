@@ -188,14 +188,24 @@ pub async fn create_and_get_torrent(client: &Api, random_name: Option<String>) -
         limit -= 1;
     }
 
+    // This sleep is just to give extra time for qbit API to update.
+    std::thread::sleep(std::time::Duration::from_secs(1));
+    let root_path = &list
+        .iter()
+        .filter(|v| v.task_id == task)
+        .next()
+        .unwrap()
+        .source_path;
+
     // Annoyingly, qbit doesn't give us much in the ways of linking a torrent task with the actual torrent...
 
-    client
-        .torrents(None)
-        .await
-        .unwrap()
+    let torrents = client.torrents(None).await.unwrap();
+    // println!("{:#?}", torrents);
+
+    // I think root path is more reliable, and besides. Its the only easy thing we can confirm without copying too much code.
+    torrents
         .iter()
-        .filter(|t| t.name == random_name.clone().unwrap())
+        .filter(|t| t.root_path == *root_path)
         .next()
         .unwrap()
         .to_owned()
