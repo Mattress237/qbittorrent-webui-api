@@ -273,6 +273,7 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
             size: i64,
             state: TorrentState,
             super_seeding: bool,
+            #[serde(deserialize_with = "deserializers::string_to_vec")]
             tags: Vec<String>,
             time_active: i64,
             total_size: i64,
