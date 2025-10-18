@@ -156,6 +156,7 @@ pub struct Torrent {
     /// True if super seeding is enabled
     pub super_seeding: bool,
     /// Comma-concatenated tag list of the torrent
+    #[serde(deserialize_with = "deserializers::string_to_vec")]
     pub tags: Vec<String>,
     /// Total active time (seconds)
     pub time_active: i64,
