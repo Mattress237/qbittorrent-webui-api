@@ -683,7 +683,7 @@ impl super::Api {
     pub async fn add_trackers_to_torrent(&self, hash: &str, urls: Vec<&str>) -> Result<(), Error> {
         let form = multipart::Form::new()
             .text("hash", hash.to_string())
-            .text("urls", urls.join("%0A"));
+            .text("urls", urls.join("\n"));
 
         self._post("torrents/addTrackers")
             .await?
