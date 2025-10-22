@@ -456,7 +456,8 @@ pub struct Tracker {
 }
 
 /// Torrent tracker status
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+#[repr(u8)]
 pub enum TrackerStatus {
     /// Tracker is disabled (used for DHT, PeX, and LSD)
     #[default]
