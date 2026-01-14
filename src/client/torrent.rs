@@ -1369,7 +1369,7 @@ impl super::Api {
             .text("hash", hash.to_string())
             .text("name", name.to_string());
 
-        self._post("torrents/setLocation")
+        self._post("torrents/rename")
             .await?
             .multipart(form)
             .send()
