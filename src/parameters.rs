@@ -482,10 +482,10 @@ pub struct AddTorrent {
     /// Tags for the torrent.
     #[builder(setter(into, strip_option), default)]
     pub tags: Option<Vec<String>>,
-    /// Skip hash checking. Possible values are `true`, `false` (default)
+    /// Skip hash checking.
     #[builder(default)]
     pub skip_checking: bool,
-    /// Add torrents in the paused state. Possible values are `true`, `false` (default)
+    /// Add torrents in the paused state.
     #[builder(default)]
     pub paused: bool,
     /// The torrent subfolder layout.
@@ -509,10 +509,10 @@ pub struct AddTorrent {
     /// Whether Automatic Torrent Management should be used
     #[builder(default)]
     pub auto_tmm: bool,
-    /// Enable sequential download. Possible values are `true`, `false` (default)
+    /// Enable sequential download.
     #[builder(default)]
     pub sequential_download: bool,
-    /// Prioritize download first last piece. Possible values are `true`, `false` (default)
+    /// Prioritize download first last piece.
     #[builder(default)]
     pub first_last_piece_prio: bool,
 }
