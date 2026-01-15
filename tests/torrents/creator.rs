@@ -72,6 +72,15 @@ async fn get_torrent_file() {
     let path = format!("{folder}_data/dummy{}.torrent", random_name.unwrap());
     let data = fs::read(&path).unwrap();
 
+    assert_eq!(
+        client
+            .get_task_file(task)
+            .await
+            .unwrap_or_default()
+            .to_vec(),
+        data
+    );
+
     for item in list.iter() {
         let r = client
             .get_task_file(item.task_id.to_owned())

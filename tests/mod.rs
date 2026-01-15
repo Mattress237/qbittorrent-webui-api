@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use qbit::{
     Api,
-    models::{Torrent, TorrentCreatorBuilder, TorrentCreatorTask},
+    models::{TaskStatus, Torrent, TorrentCreatorBuilder, TorrentCreatorTask},
     parameters::AddTorrentBuilder,
 };
 use rand::{Rng, distr::Alphabetic};
@@ -82,6 +82,18 @@ pub async fn get_debian_torrent(client: &Api) -> Option<Torrent> {
         .map(|t| t.to_owned())
 }
 
+/// Creates a random name for use in testing. This HEAVILY reduces the chances of tests failing due to using the same name, at the cost of slightly more compute but it's worth it.
+///
+/// Note: A `Some` is always returned, hence can be unwrapped without issue.
+///
+/// Usage:
+/// ```rs
+/// use crate::{create_random_name};
+///
+/// pub fn test() {
+///     let name = create_random_name().unwrap();
+/// }
+/// ```
 pub fn create_random_name() -> Option<String> {
     Some(
         rand::rng()
@@ -92,6 +104,15 @@ pub fn create_random_name() -> Option<String> {
     )
 }
 
+/// Create dummy test data file structure
+///
+/// Note: The file provided in environment variables under `temp_dir` will be used as is.
+///     And will not have stuff, like directory checks performend on it.
+///
+/// # Arguments
+///
+/// * `random_name` - A random name to append to the file. Generate one with `create_random_name()`.
+///     The point is so that each individual test can have their own stuff without breaking others.
 pub fn create_test_data(random_name: Option<String>) -> String {
     dotenv().ok();
     // persionally did not want to have to do this, but `/tmp` can cause some issues so...
@@ -136,4 +157,56 @@ pub async fn create_dummy_torrent(
         .expect("Failed to build torrent creator");
 
     client.create_task(&torrent).await
+}
+
+pub async fn create_and_get_torrent(client: &Api, random_name: Option<String>) -> Torrent {
+    let task = create_dummy_torrent(client, random_name.clone())
+        .await
+        .unwrap();
+
+    let mut list = client.list_tasks().await.unwrap();
+    // This should hopefully let the torrent finish creating before attempting to do other stuff.
+    let mut limit = 10;
+    while list
+        .iter()
+        .filter(|v| v.task_id == task)
+        .next()
+        .unwrap()
+        .status
+        != TaskStatus::Finished
+    {
+        println!(
+            "{:?}",
+            list.iter().filter(|v| v.task_id == task).next().unwrap()
+        );
+        if limit == 0 {
+            panic!("Torrent has not finished creating after ~ 10 seconds of checking.");
+        }
+
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        list = client.list_tasks().await.unwrap();
+        limit -= 1;
+    }
+
+    // This sleep is just to give extra time for qbit API to update.
+    std::thread::sleep(std::time::Duration::from_secs(1));
+    let root_path = &list
+        .iter()
+        .filter(|v| v.task_id == task)
+        .next()
+        .unwrap()
+        .source_path;
+
+    // Annoyingly, qbit doesn't give us much in the ways of linking a torrent task with the actual torrent...
+
+    let torrents = client.torrents(None).await.unwrap();
+    // println!("{:#?}", torrents);
+
+    // I think root path is more reliable, and besides. Its the only easy thing we can confirm without copying too much code.
+    torrents
+        .iter()
+        .filter(|t| t.root_path == *root_path)
+        .next()
+        .unwrap()
+        .to_owned()
 }

@@ -156,7 +156,8 @@ pub struct Torrent {
     /// True if super seeding is enabled
     pub super_seeding: bool,
     /// Comma-concatenated tag list of the torrent
-    pub tags: String,
+    #[serde(deserialize_with = "deserializers::string_to_vec")]
+    pub tags: Vec<String>,
     /// Total active time (seconds)
     pub time_active: i64,
     /// Total size (bytes) of all file in this torrent (including unselected ones)
@@ -272,7 +273,8 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
             size: i64,
             state: TorrentState,
             super_seeding: bool,
-            tags: String,
+            #[serde(deserialize_with = "deserializers::string_to_vec")]
+            tags: Vec<String>,
             time_active: i64,
             total_size: i64,
             tracker: String,

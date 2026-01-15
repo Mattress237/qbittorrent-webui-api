@@ -42,5 +42,6 @@ pub async fn list_directory_dirs() {
         .unwrap();
     println!("{:?}", contents);
 
+    // In theory, this should return true because `create_test_data` should have no directories inside, just files.
     assert!(contents.is_empty());
 }
