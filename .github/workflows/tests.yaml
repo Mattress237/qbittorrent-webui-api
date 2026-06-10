@@ -12,7 +12,8 @@ jobs:
       url: http://localhost
       port: 45378
       username: admin
-      temp_dir: .temp
+      temp_dir: /home/runner/.temp
+      server_temp_dir: /home/runner/.temp
 
       encrypted_password: "@ByteArray(ARQ77eY1NUZaQsuDHbIMCA==:0WMRkYTUWVT9wVvdDtHAjU9b3b7uB8NR1Gur2hmQCvCDpm39Q+PsJRJPaCU51dEiz+dTzh8qbPsL8WkFljQYFQ==)"
       password: adminadmin
@@ -47,6 +48,9 @@ jobs:
 
       - name: Setup rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Show working directory for testing
+        run: pwd
 
       - name: Run tests
         run: |
