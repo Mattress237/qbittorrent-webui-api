@@ -153,7 +153,7 @@ impl super::Api {
             .to_string();
 
         // Check if the cookie starts with "SID" or "QBT_SID" to validate it
-        // qbittorrent version >=5.2 vill return QBT_SID_<PORT>
+        // qbittorrent version >=5.2 will return QBT_SID_<PORT>
         // qbittorrent version < 5.2 will return SID
         // refer https://github.com/qbittorrent/qBittorrent/issues/24190
         if !(cookie.starts_with("SID") || cookie.starts_with("QBT_SID")) {
