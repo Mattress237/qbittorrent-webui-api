@@ -116,7 +116,7 @@ pub struct ServerState {
     /// Alt speed enabeld
     pub use_alt_speed_limits: bool,
     /// Use subcategories
-    pub use_subcategories: bool,
+    pub use_subcategories: Option<bool>,
     /// How overloaded is the read cache.
     ///
     /// Calculated by write queue size / peer count
