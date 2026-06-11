@@ -47,7 +47,9 @@ impl super::Api {
 
         let params = params.unwrap_or_default();
 
-        query.push(("reverse", params.reverse.to_string()));
+        if let Some(reverse) = params.reverse {
+            query.push(("reverse", reverse.to_string()));
+        }
         if let Some(filter) = params.filter {
             query.push(("filter", filter.to_string()));
         }
