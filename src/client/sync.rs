@@ -38,15 +38,25 @@ impl super::Api {
             query.push(("rid", rid));
         }
 
-        let data = self
+        let resp = self
             ._get("sync/maindata")
             .await?
             .query(&query)
             .send()
             .await?
-            .error_for_status()?
-            .json::<MainData>()
-            .await?;
+            .error_for_status()?;
+
+        let body = resp.text().await?;
+        // Attempt to deserialize, but include the body in any error for debugging
+        let data: MainData = match serde_json::from_str(&body) {
+            Ok(d) => d,
+            Err(e) => {
+                return Err(Error::InvalidResponse(format!(
+                    "Failed to deserialize MainData: {}. body: {}",
+                    e, body
+                )));
+            }
+        };
 
         Ok(data)
     }
