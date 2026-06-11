@@ -64,7 +64,7 @@ impl Api {
     async fn _post(&self, endpoint: &str) -> Result<RequestBuilder, Error> {
         let mut header_map = HeaderMap::new();
         if let Some(cookie) = self.state.read().await.as_cookie() {
-            let cookie = format!("SID={}; HttpOnly; SameSite=Strict; path=/", cookie);
+            let cookie = format!("{}; HttpOnly; SameSite=Strict; path=/", cookie);
             header_map.insert(header::COOKIE, cookie.parse().unwrap());
         }
 
@@ -78,7 +78,7 @@ impl Api {
     async fn _get(&self, endpoint: &str) -> Result<RequestBuilder, Error> {
         let mut header_map = HeaderMap::new();
         if let Some(cookie) = self.state.read().await.as_cookie() {
-            let cookie = format!("SID={}; HttpOnly; SameSite=Strict; path=/", cookie);
+            let cookie = format!("{}; HttpOnly; SameSite=Strict; path=/", cookie);
             header_map.insert(header::COOKIE, cookie.parse().unwrap());
         }
 

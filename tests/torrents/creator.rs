@@ -3,18 +3,37 @@ use qbit::{
     models::{TaskStatus, TorrentCreatorBuilder},
 };
 
-use crate::{create_dummy_torrent, create_random_name, login_default_client};
-use std::{env, fs};
+use crate::{create_dummy_torrent, create_random_name, create_test_data, login_default_client};
+use std::{env, fs, thread, time::Duration};
 
 /// This test makes sure that the endpoint can create a dummy task.
 #[tokio::test]
 #[ignore = "Test hits api endpoint"]
 async fn create_task() {
     let client = login_default_client().await;
-    let random_name = create_random_name();
-    let result = create_dummy_torrent(&client, random_name).await;
+    let random_name = create_random_name("create1_");
+    let result = create_dummy_torrent(&client, random_name.clone()).await;
 
     assert!(result.is_ok());
+
+    // Clean up
+    thread::sleep(Duration::from_secs(1));
+    client.delete_task(result.unwrap()).await.unwrap();
+    let hash = client
+        .torrents(None)
+        .await
+        .unwrap()
+        .iter()
+        .filter(|t| t.name == random_name)
+        .next()
+        .map(|t| t.hash.clone())
+        .unwrap();
+    client.delete(vec![&hash], true).await.unwrap();
+    fs::remove_file(format!(
+        "{}/_data/{random_name}.torrent",
+        env::var("temp_dir").unwrap()
+    ))
+    .unwrap();
 }
 
 /// This test makes sure that the list shows the dummy task we've just created.
@@ -22,11 +41,27 @@ async fn create_task() {
 #[ignore = "Test hits api endpoint"]
 async fn list_tasks() {
     let client = login_default_client().await;
-    let random_name = create_random_name();
-    let result = create_dummy_torrent(&client, random_name).await.unwrap();
+    let random_name = create_random_name("list1_");
+    let result = create_dummy_torrent(&client, random_name.clone())
+        .await
+        .unwrap();
     let list = client.list_tasks().await.unwrap();
     assert!(!list.is_empty());
     assert!(list.iter().any(|t| t.task_id == result));
+
+    // Clean up
+    thread::sleep(Duration::from_secs(1));
+    client.delete_task(result).await.unwrap();
+    fs::remove_dir_all(format!(
+        "{}/_data/{random_name}",
+        env::var("temp_dir").unwrap()
+    ))
+    .unwrap();
+    fs::remove_file(format!(
+        "{}/_data/{random_name}.torrent",
+        env::var("temp_dir").unwrap()
+    ))
+    .unwrap();
 }
 
 /// Tests to see that upon the torrent being finished, it is the same as the information we have in the dummy file.
@@ -34,7 +69,8 @@ async fn list_tasks() {
 #[ignore = "Test hits api endpoint"]
 async fn get_torrent_file() {
     let client = login_default_client().await;
-    let random_name = create_random_name();
+    let random_name = create_random_name("get1_");
+    create_test_data();
     let task = create_dummy_torrent(&client, random_name.clone())
         .await
         .unwrap();
@@ -64,12 +100,11 @@ async fn get_torrent_file() {
         limit -= 1;
     }
 
-    let folder = format!(
-        "{}{}",
-        env::var("temp_dir").unwrap(),
-        random_name.clone().unwrap()
+    // let folder = format!("{server_folder}", env::var("temp_dir").unwrap());
+    let path = format!(
+        "{}/_data/{random_name}.torrent",
+        env::var("temp_dir").unwrap()
     );
-    let path = format!("{folder}_data/dummy{}.torrent", random_name.unwrap());
     let data = fs::read(&path).unwrap();
 
     for item in list.iter() {
@@ -82,6 +117,24 @@ async fn get_torrent_file() {
             assert!(true);
         }
     }
+
+    // Clean up
+    thread::sleep(Duration::from_secs(1));
+    let hash = client
+        .torrents(None)
+        .await
+        .unwrap()
+        .iter()
+        .filter(|t| t.name == random_name)
+        .next()
+        .map(|t| t.hash.clone())
+        .unwrap();
+    client.delete(vec![&hash], true).await.unwrap();
+    fs::remove_file(format!(
+        "{}/_data/{random_name}.torrent",
+        env::var("temp_dir").unwrap()
+    ))
+    .unwrap();
 }
 
 /// Make sure that we can delete the created task.
@@ -89,8 +142,10 @@ async fn get_torrent_file() {
 #[ignore = "Test hits api endpoint"]
 async fn delete_created_task() {
     let client = login_default_client().await;
-    let random_name = create_random_name();
-    let task_id = create_dummy_torrent(&client, random_name).await.unwrap();
+    let random_name = create_random_name("delete1_");
+    let task_id = create_dummy_torrent(&client, random_name.clone())
+        .await
+        .unwrap();
     let list = client.list_tasks().await.unwrap();
     assert!(!list.is_empty());
     assert!(list.iter().any(|t| t.task_id == task_id));
@@ -100,6 +155,14 @@ async fn delete_created_task() {
         .expect("Failed to delete task");
     let list = client.list_tasks().await.unwrap();
     assert!(!list.iter().any(|t| t.task_id == task_id));
+
+    thread::sleep(Duration::from_secs(1));
+    fs::remove_dir_all(format!(
+        "{}/_data/{}",
+        env::var("temp_dir").unwrap(),
+        random_name
+    ))
+    .unwrap();
 }
 
 /// Test to check failed to create errors

@@ -141,19 +141,30 @@ impl super::Api {
         }
 
         let mut state = self.state.write().await;
+        let cookie = sid
+            .unwrap()
+            .to_str()
+            .map_err(|e| {
+                Error::AuthFailed(format!("Failed to pars SID cookie to str. err: {}", e))
+            })?
+            .split(';')
+            .next()
+            .ok_or(Error::AuthFailed("Failed to parse SID cookie".to_string()))?
+            .to_string();
+
+        // Check if the cookie starts with "SID" or "QBT_SID" to validate it
+        // qbittorrent version >=5.2 will return QBT_SID_<PORT>
+        // qbittorrent version < 5.2 will return SID
+        // refer https://github.com/qbittorrent/qBittorrent/issues/24190
+        if !(cookie.starts_with("SID") || cookie.starts_with("QBT_SID")) {
+            return Err(Error::AuthFailed(
+                "Login failed no valid SID cookie received".to_string(),
+            ));
+        }
+
         *state = LoginState::LoggedIn {
             credentials: state.as_credentials().unwrap().clone(),
-            cookie_sid: sid
-                .unwrap()
-                .to_str()
-                .map_err(|e| {
-                    Error::AuthFailed(format!("Failed to pars SID cookie to str. err: {}", e))
-                })?
-                .split(';')
-                .next()
-                .ok_or(Error::AuthFailed("Failed to parse SID cookie".to_string()))?
-                .trim_start_matches("SID=")
-                .to_string(),
+            cookie_sid: cookie,
         };
 
         Ok(())
