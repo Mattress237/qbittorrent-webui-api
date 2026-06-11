@@ -7,7 +7,7 @@
 
 Asynchronous Rust wrapper for Qbittorrent Web API, supporting all documented endpoints.
 
-Supported Qbittorrent version: `5.1`
+Supported Qbittorrent version: `>=5.1.2`
 
 # Usage
 
