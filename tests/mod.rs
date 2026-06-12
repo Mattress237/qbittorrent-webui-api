@@ -21,8 +21,8 @@ const DUMMY_FILE: &str = "dummy/dummy.txt";
 pub fn get_server_details() -> String {
     dotenv().ok();
 
-    let url = env::var("url");
-    let port = env::var("port");
+    let url = env::var("WEBUI_URL");
+    let port = env::var("WEBUI_PORT");
 
     if url.is_err() || port.is_err() {
         println!("Default to `http://localhost:45378` as couldn't fully load data from .env");
@@ -36,12 +36,12 @@ pub fn get_server_details() -> String {
 
 pub fn get_server_username() -> String {
     dotenv().ok();
-    env::var("username").unwrap_or("admin".to_string())
+    env::var("WEBUI_USERNAME").unwrap_or("admin".to_string())
 }
 
 pub fn get_server_password() -> String {
     dotenv().ok();
-    env::var("password").unwrap_or("adminadmin".to_string())
+    env::var("WEBUI_PASSWORD").unwrap_or("adminadmin".to_string())
 }
 
 pub async fn login_default_client() -> Api {
@@ -101,16 +101,16 @@ pub fn create_random_name(prefix: &str) -> String {
 // NOTE: The random name is ignored and a dummy file is always created.
 pub fn create_test_data() -> String {
     dotenv().ok();
-    if env::var("temp_dir").is_err() {
-        panic!("'temp_dir' not set. Required for test data creation.");
+    if env::var("TEMP_DIR").is_err() {
+        panic!("'TEMP_DIR' not set. Required for test data creation.");
     }
-    if env::var("server_temp_dir").is_err() {
-        panic!("'server_temp_dir' not set. Required for test data creation.");
+    if env::var("SERVER_TEMP_DIR").is_err() {
+        panic!("'SERVER_TEMP_DIR' not set. Required for test data creation.");
     }
 
     // persionally did not want to have to do this, but `/tmp` can cause some issues so...
     // Create the temp directory if it doesn't exist
-    let folder = env::var("temp_dir").unwrap();
+    let folder = env::var("TEMP_DIR").unwrap();
     if !fs::exists(format!("{folder}")).unwrap() {
         fs::create_dir(format!("{folder}")).unwrap_or_default();
     }
@@ -132,7 +132,7 @@ pub fn create_test_data() -> String {
 
     // Edited so that the folder path is returned as the server temporary test directory
     // path::absolute(folder).unwrap().display().to_string()
-    env::var("server_temp_dir").unwrap()
+    env::var("SERVER_TEMP_DIR").unwrap()
 }
 
 pub async fn create_dummy_torrent(
@@ -140,20 +140,20 @@ pub async fn create_dummy_torrent(
     name: String,
 ) -> Result<TorrentCreatorTask, qbit::Error> {
     let server_folder = create_test_data();
-    let folder = format!("{}/_data/{name}", env::var("temp_dir").unwrap());
+    let folder = format!("{}/_data/{name}", env::var("TEMP_DIR").unwrap());
     fs::create_dir_all(&folder).unwrap_or_default();
     println!(
         "{} : {}",
-        format!("{}/{DUMMY_FILE}", env::var("temp_dir").unwrap()),
+        format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap()),
         format!("{folder}/dummy.txt")
     );
     println!(
         "{:?} : {:?}",
-        fs::exists(format!("{}/{DUMMY_FILE}", env::var("temp_dir").unwrap())),
+        fs::exists(format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap())),
         fs::exists(format!("{folder}/dummy.txt"))
     );
     fs::copy(
-        format!("{}/{DUMMY_FILE}", env::var("temp_dir").unwrap()),
+        format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap()),
         format!("{folder}/dummy.txt"),
     )
     .unwrap();

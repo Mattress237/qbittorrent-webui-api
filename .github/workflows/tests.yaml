@@ -8,15 +8,15 @@ jobs:
 
     # The way github works, means that this `env` will also pretty much do the `.env` file for rust to work.
     env:
-      # url should not need to chance as we are running qbittorrent locally on github servers.
-      url: http://localhost
-      port: 45378
-      username: admin
-      temp_dir: /home/runner/.temp
-      server_temp_dir: /home/runner/.temp
+      # URL should not need to chance as we are running qbittorrent locally on github servers.
+      WEBUI_URL: http://localhost
+      WEBUI_PORT: 45378
+      WEBUI_USERNAME: admin
+      TEMP_DIR: /home/runner/.temp
+      SERVER_TEMP_DIR: /home/runner/.temp
 
       encrypted_password: "@ByteArray(ARQ77eY1NUZaQsuDHbIMCA==:0WMRkYTUWVT9wVvdDtHAjU9b3b7uB8NR1Gur2hmQCvCDpm39Q+PsJRJPaCU51dEiz+dTzh8qbPsL8WkFljQYFQ==)"
-      password: adminadmin
+      WEBUI_PASSWORD: adminadmin
 
     steps:
       - name: Install qbittorrent-nox
@@ -31,9 +31,9 @@ jobs:
           mkdir -p ~/.config/qBittorrent
           cat > ~/.config/qBittorrent/qBittorrent.conf << 'EOF'
           [Preferences]
-          WebUI\Username=${{ env.username }}
+          WebUI\Username=${{ env.WEBUI_USERNAME }}
           WebUI\Password_PBKDF2="${{ env.encrypted_password }}"
-          WebUI\Port=${{ env.port }}
+          WebUI\Port=${{ env.WEBUI_PORT }}
           EOF
 
       - name: Debug version

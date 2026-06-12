@@ -37,7 +37,7 @@ pub async fn list_directory_files() {
 #[ignore = "Test hits api endpoint"]
 pub async fn list_directory_dirs() {
     let folder = create_test_data();
-    let temp_dir = env::var("temp_dir").unwrap();
+    let temp_dir = env::var("TEMP_DIR").unwrap();
     if fs::exists(format!("{temp_dir}/dir_test_empty_list")).unwrap() {
         fs::remove_dir_all(format!("{temp_dir}/dir_test_empty_list")).unwrap();
     }

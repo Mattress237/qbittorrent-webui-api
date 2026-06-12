@@ -31,7 +31,7 @@ async fn create_task() {
     client.delete(vec![&hash], true).await.unwrap();
     fs::remove_file(format!(
         "{}/_data/{random_name}.torrent",
-        env::var("temp_dir").unwrap()
+        env::var("TEMP_DIR").unwrap()
     ))
     .unwrap();
 }
@@ -54,12 +54,12 @@ async fn list_tasks() {
     client.delete_task(result).await.unwrap();
     fs::remove_dir_all(format!(
         "{}/_data/{random_name}",
-        env::var("temp_dir").unwrap()
+        env::var("TEMP_DIR").unwrap()
     ))
     .unwrap();
     fs::remove_file(format!(
         "{}/_data/{random_name}.torrent",
-        env::var("temp_dir").unwrap()
+        env::var("TEMP_DIR").unwrap()
     ))
     .unwrap();
 }
@@ -100,10 +100,10 @@ async fn get_torrent_file() {
         limit -= 1;
     }
 
-    // let folder = format!("{server_folder}", env::var("temp_dir").unwrap());
+    // let folder = format!("{server_folder}", env::var("TEMP_DIR").unwrap());
     let path = format!(
         "{}/_data/{random_name}.torrent",
-        env::var("temp_dir").unwrap()
+        env::var("TEMP_DIR").unwrap()
     );
     let data = fs::read(&path).unwrap();
 
@@ -132,7 +132,7 @@ async fn get_torrent_file() {
     client.delete(vec![&hash], true).await.unwrap();
     fs::remove_file(format!(
         "{}/_data/{random_name}.torrent",
-        env::var("temp_dir").unwrap()
+        env::var("TEMP_DIR").unwrap()
     ))
     .unwrap();
 }
@@ -159,7 +159,7 @@ async fn delete_created_task() {
     thread::sleep(Duration::from_secs(1));
     fs::remove_dir_all(format!(
         "{}/_data/{}",
-        env::var("temp_dir").unwrap(),
+        env::var("TEMP_DIR").unwrap(),
         random_name
     ))
     .unwrap();
