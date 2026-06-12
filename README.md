@@ -7,7 +7,8 @@
 
 Asynchronous Rust wrapper for Qbittorrent Web API, supporting all documented endpoints.
 
-Supported Qbittorrent version: `>=5.1.2`
+Supported Qbittorrent versions: `>=5.2.0`, `>=5.1.2`
+This is the lowest tested versions.
 
 # Usage
 
@@ -16,13 +17,13 @@ Add it using cargo:
 cargo add qbit
 ```
 
-Add it manually:
+Add it manually in your `Cargo.toml`:
 ``` toml
 [dependencies]
 qbit = "0.2"
 ```
 
-Basic usage to get all torrents:
+## Basic usage to get all torrents:
 ``` rust
 use qbit::API;
 use qbit::Credentials;
@@ -33,16 +34,40 @@ let client = API::new_login("http://qBittorrent.server:6969", cred).await.unwrap
 let torrents = client.torrents(None).await.unwrap();
 ```
 
-## Implemented
+# Testing
+Quick example of how to set up the codebase for testing.
+
+## Basic codebase tests
+Basic testing of the codebase. This should not hit external services.
+``` bash
+cargo test
+```
+
+## Full API tests
+Testing of API calls against a running qBittorrent server.
+It requires a running qBittorrent server with the web UI enabled. 
+It uses environment variables to configure the server URL and credentials.
+Environment can be set in the shell or in a `.env` file see `.env.example`.
+``` bash
+WEBUI_URL="http://localhost" \
+WEBUI_PORT="6969" \
+WEBUI_USERNAME="admin" \
+WEBUI_PASSWORD="adminadmin" \
+TEMP_DIR=".temp" \
+SERVER_TEMP_DIR=".temp" \
+cargo test -- --include-ignored
+```
+
+# Implemented
 
 [WebUI 5.0 documentation](<https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-5.0)>)
 
-### Authentication
+## Authentication
 
 - [x] Login
 - [x] Logout
 
-### Application
+## Application
 
 - [x] Get application version
 - [x] Get API version
@@ -54,17 +79,17 @@ let torrents = client.torrents(None).await.unwrap();
 - [x] Get cookies
 - [x] Set cookies
 
-### Log
+## Log
 
 - [x] Get log
 - [x] Get peer log
 
-### Sync
+## Sync
 
 - [x] Get main data
 - [x] Get torrent peers data // Incomplete documentation for API
 
-### Transfer info
+## Transfer info
 
 - [x] Get global transfer info
 - [x] Get alternative speed limits state
@@ -75,7 +100,7 @@ let torrents = client.torrents(None).await.unwrap();
 - [x] Set global upload limit
 - [x] Ban peers
 
-### Torrent management
+## Torrent management
 
 - [x] Get torrent list
 - [x] Get torrent generic properties
@@ -124,7 +149,7 @@ let torrents = client.torrents(None).await.unwrap();
 - [x] Rename file   // Unsure if this is for the file or the torrent
 - [x] Rename folder // Unsure if this is for the file or the torrent
 
-### RSS (experimental)
+## RSS (experimental)
 
 - [x] Add folder
 - [x] Add feed
@@ -139,7 +164,7 @@ let torrents = client.torrents(None).await.unwrap();
 - [x] Get all auto-downloading rules
 - [x] Get all articles matching a rule
 
-### Search
+## Search
 
 - [x] Start search
 - [x] Stop search
