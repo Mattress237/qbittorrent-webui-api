@@ -74,6 +74,58 @@ where
     }
 }
 
+pub fn string_to_vec_newline_separated<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(vec![]),
+        JsonValue::String(s) => {
+            let t = s.trim();
+            if t.is_empty() {
+                Ok(vec![])
+            } else {
+                Ok(s.split('\n')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect())
+            }
+        }
+        other => Err(serde::de::Error::custom(format!(
+            "unexpected type for vec deserialization: {:?}",
+            other
+        ))),
+    }
+}
+
+pub fn string_to_vec_semicolon_separated<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(vec![]),
+        JsonValue::String(s) => {
+            let t = s.trim();
+            if t.is_empty() {
+                Ok(vec![])
+            } else {
+                Ok(s.split(';')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect())
+            }
+        }
+        other => Err(serde::de::Error::custom(format!(
+            "unexpected type for vec deserialization: {:?}",
+            other
+        ))),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -158,5 +210,81 @@ mod tests {
         let data = json!({ "value": null });
         let result: TestData<TestEnum> = serde_json::from_value(data).unwrap();
         assert_eq!(result.value, TestEnum::Two);
+    }
+
+    mod string_to_vec_newline_separated_tests {
+        use super::*;
+
+        #[derive(Deserialize, Debug, PartialEq)]
+        struct TestDataVecString {
+            #[serde(deserialize_with = "string_to_vec_newline_separated")]
+            value: Vec<String>,
+        }
+
+        #[test]
+        fn from_null() {
+            let data = json!({ "value": null });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert!(result.value.is_empty());
+        }
+
+        #[test]
+        fn from_string() {
+            let data = json!({ "value": "String" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, vec!["String"]);
+        }
+
+        #[test]
+        fn from_string_with_newlines() {
+            let data = json!({ "value": "String\nString2" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, vec!["String", "String2"]);
+        }
+
+        #[test]
+        fn from_string_with_newlines_and_trailing() {
+            let data = json!({ "value": "String\nString2\n" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, vec!["String", "String2"]);
+        }
+    }
+
+    mod string_to_vec_semicolon_separated_tests {
+        use super::*;
+
+        #[derive(Deserialize, Debug, PartialEq)]
+        struct TestDataVecString {
+            #[serde(deserialize_with = "string_to_vec_semicolon_separated")]
+            value: Vec<String>,
+        }
+
+        #[test]
+        fn from_null() {
+            let data = json!({ "value": null });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert!(result.value.is_empty());
+        }
+
+        #[test]
+        fn from_string() {
+            let data = json!({ "value": "String" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, vec!["String"]);
+        }
+
+        #[test]
+        fn from_string_with_semicolons() {
+            let data = json!({ "value": "String;String2" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, vec!["String", "String2"]);
+        }
+
+        #[test]
+        fn from_string_with_semicolons_and_trailing() {
+            let data = json!({ "value": "String;String2;" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, vec!["String", "String2"]);
+        }
     }
 }

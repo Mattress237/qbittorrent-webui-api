@@ -4,6 +4,8 @@ use serde_json::Value as JsonValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::{collections::HashMap, fmt::Display};
 
+use crate::utilities::{deserializers, serializers};
+
 /// Build info response data object.
 ///
 /// Contains version information of software used to run qbittorrent.
@@ -160,7 +162,9 @@ pub struct Preferences {
     /// - *: Any character
     /// - ?: Any Single character
     /// - [...]: Sets of characters
-    pub excluded_file_names: String, // TODO: make parser to split on newlines
+    #[serde(deserialize_with = "deserializers::string_to_vec_newline_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_newline_separated")]
+    pub excluded_file_names: Vec<String>,
 
     // ========== Email Notifications ==========
     /// Should email notifications be sent after a download is finished?
@@ -317,7 +321,9 @@ pub struct Preferences {
     pub ip_filter_trackers: bool,
     /// List of banned IPs. Separated by new lines (`\n`)
     #[serde(rename = "banned_IPs")]
-    pub banned_ips: String, // TODO: make deserializer and serializer to split on newlines
+    #[serde(deserialize_with = "deserializers::string_to_vec_newline_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_newline_separated")]
+    pub banned_ips: Vec<String>,
 
     // ===================================
     // ========= Speed Settings ==========
@@ -343,10 +349,9 @@ pub struct Preferences {
     /// Bittorrent Protocol to use (see list of possible values below)
     pub bittorrent_protocol: BittorrentProtocol,
     /// Should `dl_limit` be applied to uTP connections?
-    ///
-    /// Note: qbittorrent built against libtorrent version `0.16.x` and higher is required for this setting.
     pub limit_utp_rate: bool,
-    /// Should `dl_limit` be applied to estimated TCP overhead? (e.g. service data such as packet headers)
+    /// Should `dl_limit` be applied to estimated TCP overhead? (e.g. service
+    /// data such as packet headers)
     pub limit_tcp_overhead: bool,
     /// Should `dl_limit` be applied to peers on the LAN?
     pub limit_lan_peers: bool,
@@ -383,9 +388,8 @@ pub struct Preferences {
     pub encryption: Encryption,
     /// Is the user anonymous?
     ///
-    /// WARNING: This doesn't grant enough protection on its own. See https://github.com/qbittorrent/qBittorrent/wiki/Anonymous-Mode for more information.
-    ///
-    /// Note: qbittorrent built against libtorrent version `0.16.x` and higher is required for this setting.
+    /// WARNING: This doesn't grant enough protection on its own.
+    /// See https://github.com/qbittorrent/qBittorrent/wiki/Anonymous-Mode for more information.
     pub anonymous_mode: bool,
 
     // ========== Queue Management ==========
@@ -419,7 +423,8 @@ pub struct Preferences {
     ///
     /// -1 = disabled (will also set `max_seeding_time_enabled` to false)
     pub max_seeding_time: i32,
-    /// Should an action be taken once the torrent has been inactive (during seeding) for a certain amount of time?
+    /// Should an action be taken once the torrent has been inactive (during
+    /// seeding) for a certain amount of time?
     pub max_inactive_seeding_time_enabled: bool,
     /// Number of minutes for the torrent to be inactive (during seeding) before an action is taken.
     ///
@@ -450,8 +455,10 @@ pub struct Preferences {
     pub add_trackers_from_url_enabled: bool,
     /// The URL to get the trackers from
     pub add_trackers_url: String,
-    /// Read-only list of trackers automatiaclly updated from provided url in `add_trackers_url`. Separated by new line (`\n`)
-    pub add_trackers_url_list: String, // TODO: make serializer and deserializer to split on newlines to a Vec<String>
+    /// Read-only list of trackers automatiaclly updated from provided url in `add_trackers_url`.
+    #[serde(deserialize_with = "deserializers::string_to_vec_newline_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_newline_separated")]
+    pub add_trackers_url_list: Vec<String>,
 
     // ==================================
     // ============= Web UI =============
@@ -489,8 +496,10 @@ pub struct Preferences {
     pub bypass_local_auth: bool,
     /// True if webui authentication should be bypassed for clients whose ip resides within (at least) one of the subnets on the whitelist
     pub bypass_auth_subnet_whitelist_enabled: bool,
-    /// (White)list of ipv4/ipv6 subnets for which webui authentication should be bypassed; list entries are separated by commas
-    pub bypass_auth_subnet_whitelist: String, // TODO: make serializer and deserializer to split on commas to a Vec<String>
+    /// (White)list of ipv4/ipv6 subnets for which webui authentication should be bypassed;
+    #[serde(deserialize_with = "deserializers::string_to_vec_newline_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_newline_separated")]
+    pub bypass_auth_subnet_whitelist: Vec<String>,
     /// Maximum number of authentication failures before WebUI access ban
     pub web_ui_max_auth_fail_count: i32,
     /// WebUI access ban duration in seconds
@@ -527,14 +536,18 @@ pub struct Preferences {
     pub web_ui_use_custom_http_headers_enabled: bool,
     /// For API ≥ v2.5.1: List of custom http headers.
     ///
-    /// Format: `Key: Value`. Separated by a new line
-    pub web_ui_custom_http_headers: String, // TODO: make serializer and deserializer to split on `\n` to a Vec<String>
+    /// Format: `Key: Value`.
+    #[serde(deserialize_with = "deserializers::string_to_vec_newline_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_newline_separated")]
+    pub web_ui_custom_http_headers: Vec<String>, //
 
     // ========== Reverse Proxy ==========
     /// Are using reverse proxies allowed?
     pub web_ui_reverse_proxy_enabled: bool,
     /// List of trusted proxies to access the webui. Separated by `;`
-    pub web_ui_reverse_proxies_list: String, // TODO: make serializer and deserializer to split on `;` to a Vec<String>
+    #[serde(deserialize_with = "deserializers::string_to_vec_semicolon_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_semicolon_separated")]
+    pub web_ui_reverse_proxies_list: Vec<String>,
 
     // =========== Dynamic DNS ==========
     /// Should the server DNS be updated dynamically?
@@ -561,10 +574,12 @@ pub struct Preferences {
     pub rss_processing_enabled: bool,
     /// Enable auto-downloading of torrents from the RSS feeds
     pub rss_auto_downloading_enabled: bool,
-    /// For API ≥ v2.5.1: Enable downloading of repack/proper Episodes
+    /// Enable downloading of repack/proper Episodes
     pub rss_download_repack_proper_episodes: bool,
-    /// For API ≥ v2.5.1: List of RSS Smart Episode Filters. Separated by a new line (`\n`)
-    pub rss_smart_episode_filters: String, // TODO: make serializer and deserializer to split on `\n` to a Vec<String>
+    /// List of RSS Smart Episode Filters.
+    #[serde(deserialize_with = "deserializers::string_to_vec_newline_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_newline_separated")]
+    pub rss_smart_episode_filters: Vec<String>,
 
     // =================================
     // ======= Advanced Settings =======
@@ -584,8 +599,6 @@ pub struct Preferences {
     )]
     pub torrent_content_remove_option: TorrentDeletion,
     /// Memory usage limit of Physical RAM in MiB
-    ///
-    /// Note: Requires Libtorrent >= 2.0.0
     pub memory_working_set_limit: i32,
     /// Network Interface used
     pub current_network_interface: String,
@@ -739,8 +752,6 @@ pub struct Preferences {
     /// Determinds the DSCP field in the IP header
     ///
     /// See https://www.libtorrent.org/reference-Settings.html#peer_dscp for more information
-    ///
-    /// Note: Qbittorrent uses the old version of this setting name.
     #[serde(rename = "peer_tos")]
     pub peer_dscp: i32,
     /// μTP-TCP mixed mode algorithm (see list of possible values below)
@@ -1018,8 +1029,6 @@ pub enum DiskWrite {
     #[default]
     Enable = 1,
     /// FLushes pieces to disk as they complete validation.
-    ///
-    /// Requires LibTorrent >= 2.0.6
     WriteThrough = 2,
 }
 
