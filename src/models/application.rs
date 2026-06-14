@@ -1,8 +1,8 @@
-use std::{collections::HashMap, fmt::Display};
-
 use derive_builder::Builder;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Value as JsonValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::{collections::HashMap, fmt::Display};
 
 /// Build info response data object.
 ///
@@ -19,6 +19,22 @@ pub struct BuildInfo {
     pub openssl: String,
     /// Application bitness (e.g. 64-bit)
     pub bitness: u8,
+}
+
+/// Struct containing information about an individual cookie.
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+pub struct Cookie {
+    /// The name of the cookie.
+    pub name: String,
+    /// The domain associated with the cookie.
+    pub domain: String,
+    /// The path associated with the cookie.
+    pub path: String,
+    /// The value stored in the cookie.
+    pub value: String,
+    /// The expiration date of the cookie, represented as seconds since the Unix epoch.
+    #[serde(rename = "expirationDate")]
+    pub expiration: i64,
 }
 
 /// Preferences response data object.
@@ -70,6 +86,10 @@ pub struct Preferences {
 
     // ======== When adding a torrent =======
     /// The default layout of the torrent content.
+    #[serde(
+        deserialize_with = "string_to_content_layout",
+        serialize_with = "content_layout_to_string"
+    )]
     pub torrent_content_layout: ContentLayout,
     /// To add new torrents to the top of the queue by default or not?
     pub add_to_top_of_queue: bool,
@@ -79,6 +99,8 @@ pub struct Preferences {
     /// - False = Start downloading automatically.
     pub add_stopped_enabled: bool,
     /// When does the torrent stop
+    #[serde(deserialize_with = "string_to_stop_condition")]
+    #[serde(serialize_with = "stop_condition_to_string")]
     pub torrent_stop_condition: StopCondition,
     /// If the torrent exists, do we merge trackers with it or fail to add the torrent altogether?
     pub merge_trackers: bool,
@@ -258,6 +280,8 @@ pub struct Preferences {
 
     // ========== Proxy Settings ==========
     /// The protocol to use for the proxy server
+    #[serde(deserialize_with = "string_to_proxy_type")]
+    #[serde(serialize_with = "proxy_type_to_string")]
     pub proxy_type: ProxyType,
     /// Proxy IP address or domain name
     pub proxy_ip: String,
@@ -459,6 +483,7 @@ pub struct Preferences {
     /// For API ≥ v2.3.0: Plaintext WebUI password. This field is write-only and cannot be read back.
     ///
     /// The password is used exclusively for setting or updating the WebUI password.
+    #[serde(skip_serializing_if = "Option::is_none")] // Needed to acoid overwriting password
     pub web_ui_password: Option<String>,
     /// True if authentication challenge for loopback address (127.0.0.1) should be disabled
     pub bypass_local_auth: bool,
@@ -547,8 +572,16 @@ pub struct Preferences {
     //
     // ===== Preferences Settings ======
     /// What type of storage should be used to save the Fastresume files.
+    #[serde(
+        deserialize_with = "string_to_fast_resume_type",
+        serialize_with = "fast_resume_type_to_string"
+    )]
     pub resume_data_storage_type: FastResumeType,
     /// What to do with removing torrents.
+    #[serde(
+        deserialize_with = "string_to_torrent_deletion",
+        serialize_with = "torrent_deletion_to_string"
+    )]
     pub torrent_content_remove_option: TorrentDeletion,
     /// Memory usage limit of Physical RAM in MiB
     ///
@@ -786,19 +819,265 @@ pub struct Preferences {
     pub dht_bootstrap_nodes: String,
 }
 
-/// How the torrent content is laied out.
+/// Whether the `.torrent` file should be deleted after the torrent is added.
 #[repr(u8)]
+#[derive(Debug, Serialize_repr, Deserialize_repr, Clone, Default, PartialEq)]
+pub enum AutoDeleteMode {
+    /// Never delete the `.torrent` file.
+    #[default]
+    Never = 0,
+    /// Only delete the `.torrent` file if the torrent is added.
+    IfAdded = 1,
+    /// Always delete the `.torrent` file.
+    Always = 2,
+}
+
+/// The encryption type to use for SMTP notifications.
+// [qBittorrent #23838](https://github.com/qbittorrent/qBittorrent/pull/23838)
+#[cfg(feature = "qBittorrent-5_3")]
+#[repr(u8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum SMTPEncryptionType {
+    None = 0,
+    STARTTLS = 1,
+    #[default]
+    SMTPS = 2,
+}
+
+/// The mode for share limits.
+// [qBittorrent #24043](https://github.com/qbittorrent/qBittorrent/pull/24043)
+#[cfg(feature = "qBittorrent-5_3")]
+#[repr(i8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum SeedLimitMode {
+    /// Use the default mode
+    #[default]
+    Default = -1, // special value
+
+    /// Match any of the share limits
+    MatchAny = 0,
+    /// Match all of the share limits
+    MatchAll = 1,
+}
+
+/// What action should be taken when the seeding limit is reached?
+#[repr(i8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum SeedLimitActions {
+    /// Use the default action
+    #[default]
+    Default = -1, // special value
+    /// Stop the torrent upon the limit being reached
+    StopTorrent = 0,
+    /// Remove the torrent upon the limit being reached
+    RemoveTorrent = 1,
+    /// Remove the torrent and files upon the limit being reached
+    RemoveTorrentFiles = 2,
+    /// Make the torrent use the super seeding algorithm upon the limit being reached.
+    TorrentSuperSeeding = 3,
+}
+
+/// Bittorrent protocols
+#[repr(u8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum BittorrentProtocol {
+    /// To use both TCP and UTP
+    TcpUtp = 0,
+    #[default]
+    /// To just use TCP
+    Tcp = 1,
+    /// To just use UTP
+    Utp = 2,
+}
+
+/// Days on which the alternative speed limit schedule is applied.
+#[repr(u8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum SchedulerTime {
+    /// Every day
+    #[default]
+    Day = 0,
+    /// Every Weekday
+    Weekday = 1,
+    /// Every Weekend
+    Weekend = 2,
+    /// Every Monday
+    Monday = 3,
+    /// Every Tuesday
+    Tuesday = 4,
+    /// Every Wednesday
+    Wednesday = 5,
+    /// Every Thursday
+    Thursday = 6,
+    /// Every Friday
+    Friday = 7,
+    /// Every Saturday
+    Saturday = 8,
+    /// Every Sunday
+    Sunday = 9,
+}
+
+/// Encryption states
+#[repr(u8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum Encryption {
+    #[default]
+    /// Allows encryption for file transfer.
+    Allow = 0,
+    /// Requires encryption for file transfer.
+    Require = 1,
+    /// Disables encryption for file transfer.
+    Disable = 2,
+}
+
+/// Dyndns servcice types
+#[repr(i8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum DyndnsService {
+    /// No dynamic DNS service is selected.
+    None = -1,
+    #[default]
+    /// Uses DYN: https://account.dyn.com/
+    Dydns = 0,
+    /// Uses NO-IP: https://www.noip.com/
+    Noip = 1,
+}
+
+/// Upload choking algorithm
+#[repr(u8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum UploadChokingAlgorithm {
+    #[default]
+    /// Rotate unchoked peers in a round-robin fashion, giving each peer a fair chance to upload.
+    RoundRobin = 0,
+    /// Prefer peers that currently offer the fastest upload throughput to maximise overall upload performance.
+    FastestUpload = 1,
+    /// Use anti-leech heuristics to deprioritize peers that do not contribute, favouring peers that upload data back.
+    AntiLeech = 2,
+}
+
+/// Algorithm to use for unchoking peers.
+#[repr(u8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum UploadSlotsBehavior {
+    #[default]
+    /// Unchokes a fixed amount of seeders
+    Fixed = 0,
+    /// Opens up slots based on the upload rate achieved to peers.
+    UploadRate = 1,
+}
+
+/// μTP / TCP mixed-mode algorithm selection.
+///
+/// This setting controls how the client mixes uTP and TCP connections when both
+/// protocols are available. It determines the preference or distribution of
+/// connection attempts between the two transport protocols.
+#[repr(u8)]
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+pub enum UtpTcpMixedMode {
+    /// Prefer TCP connections when both TCP and uTP are available.
+    ///
+    /// When this mode is selected, the client will favour establishing TCP
+    /// connections over uTP ones whenever possible.
+    #[default]
+    PreferTcp = 0,
+    /// Distribute connections proportionally based on peer capabilities.
+    ///
+    /// In this mode the client attempts to balance or proportion connections
+    /// between TCP and uTP according to peer availability and characteristics,
+    /// rather than strictly preferring one protocol.
+    PeerProportional = 1,
+}
+
+/// Is the OS allowed to cache read data from files?
+///
+/// See https://www.libtorrent.org/reference-Settings.html#disk_io_read_mode for more information.
+#[repr(u8)]
+#[derive(
+    Debug, Default, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone,
+)]
+pub enum DiskRead {
+    /// Don't Allow the OS to cache read data.
+    Disable = 0,
+    /// Allow the OS to cache read data.
+    #[default]
+    Enable = 1,
+}
+
+/// Is the OS allowed to cache write data to files?
+///
+/// See https://www.libtorrent.org/reference-Settings.html#disk_io_write_mode for more information.
+#[repr(u8)]
+#[derive(
+    Debug, Default, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone,
+)]
+pub enum DiskWrite {
+    /// Don't Allow the OS to cache write data.
+    Disable = 0,
+    /// Allow the OS to cache write data.
+    #[default]
+    Enable = 1,
+    /// FLushes pieces to disk as they complete validation.
+    ///
+    /// Requires LibTorrent >= 2.0.6
+    WriteThrough = 2,
+}
+
+/// Disk I/O constructor selection.
+///
+/// See: https://www.libtorrent.org/single-page-ref.html#default-disk-io-constructor
+///
+/// Enum values sourced from VueTorrent. Choose how libtorrent should perform
+/// disk I/O for reading and writing torrent data.
+#[repr(u8)]
+#[derive(
+    Debug, Default, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone,
+)]
+pub enum DiskIOType {
+    /// Use the library's default behaviour: memory-mapped I/O when available,
+    /// otherwise fall back to POSIX-based I/O.
+    #[default]
+    Default = 0,
+    /// Use memory-mapped files (mmap) for disk I/O. This can improve performance
+    /// by mapping file contents directly into memory.
+    MemoryMappedFiles = 1,
+    /// Use POSIX-compliant file I/O methods. This variant selects a POSIX-style
+    /// approach (e.g., pread/pwrite semantics) for compatibility on POSIX systems.
+    PosixComplaint = 2,
+    /// Use single pread/pwrite operations for reads and writes.
+    /// This is a more basic I/O method that performs single-shot read/write calls.
+    SinglePReadWrite = 3,
+    /// Use pread/pwrite operations for reads and writes.
+    PreadPwrite = 4,
+}
+
+/// The type of age
+#[repr(i8)]
+#[derive(
+    Debug, Default, Serialize_repr, Deserialize_repr, PartialEq, Eq, PartialOrd, Ord, Clone,
+)]
+pub enum FileAge {
+    /// After X days
+    Day = 0,
+    /// After X months
+    #[default]
+    Month = 1,
+    /// After X years
+    Year = 2,
+}
+
+/// How the torrent content is laied out.
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum ContentLayout {
     /// Does whatever the client says to do, which by default is Subfolder
     #[default]
-    Original = 0,
+    Original,
     /// In cases of batches, will create a separate subfolder automatically of the batch name.
     /// Example: `Save_path/Torrent_name/Torrent_files`
-    Subfolder = 1,
+    Subfolder,
     /// In cases of batches, will just place them all in the save_path.
     /// Example: `Save_path/Torrent_files`
-    NoSubfolder = 2,
+    NoSubfolder,
 }
 
 impl std::fmt::Display for ContentLayout {
@@ -811,17 +1090,46 @@ impl std::fmt::Display for ContentLayout {
     }
 }
 
+pub fn string_to_content_layout<'de, D>(deserializer: D) -> Result<ContentLayout, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::String(s) => match s.as_str() {
+            "Original" => Ok(ContentLayout::Original),
+            "Subfolder" => Ok(ContentLayout::Subfolder),
+            "NoSubfolder" => Ok(ContentLayout::NoSubfolder),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid content layout: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for content layout: {:?}",
+            v
+        ))),
+    }
+}
+
+pub fn content_layout_to_string<S>(value: &ContentLayout, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&value.to_string())
+}
+
 /// When does the torrent stop
-#[repr(i8)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 pub enum StopCondition {
     /// Don't stop and go straight to downloading
     #[default]
-    None = 0,
+    None,
     /// Stop after receiving the metadata
-    MetadataReceived = 1,
+    MetadataReceived,
     /// Stop after checking the files.
-    FilesChecked = 2,
+    FilesChecked,
 }
 
 impl std::fmt::Display for StopCondition {
@@ -834,28 +1142,44 @@ impl std::fmt::Display for StopCondition {
     }
 }
 
-/// Whether the `.torrent` file should be deleted after the torrent is added.
-#[repr(u8)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
-pub enum AutoDeleteMode {
-    /// Never delete the `.torrent` file.
-    #[default]
-    Never = 0,
-    /// Only delete the `.torrent` file if the torrent is added.
-    IfAdded = 1,
-    /// Always delete the `.torrent` file.
-    Always = 2,
+pub fn string_to_stop_condition<'de, D>(deserializer: D) -> Result<StopCondition, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::String(s) => match s.as_str() {
+            "None" => Ok(StopCondition::None),
+            "MetadataReceived" => Ok(StopCondition::MetadataReceived),
+            "FilesChecked" => Ok(StopCondition::FilesChecked),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid stop condition: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for stop condition: {:?}",
+            v
+        ))),
+    }
+}
+
+pub fn stop_condition_to_string<S>(value: &StopCondition, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&value.to_string())
 }
 
 /// What to do when removing content files upon removing a torrent.
-#[repr(u8)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
 pub enum TorrentDeletion {
     /// Erase from disk permanatly
     #[default]
-    Delete = 0,
+    Delete,
     /// Attempts to move to Trash/Wastebin if possible.
-    MoveToTrash = 1,
+    MoveToTrash,
 }
 
 impl std::fmt::Display for TorrentDeletion {
@@ -865,6 +1189,38 @@ impl std::fmt::Display for TorrentDeletion {
             Self::MoveToTrash => write!(f, "MoveToTrash"),
         }
     }
+}
+
+pub fn string_to_torrent_deletion<'de, D>(deserializer: D) -> Result<TorrentDeletion, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::String(s) => match s.as_str() {
+            "Delete" => Ok(TorrentDeletion::Delete),
+            "MoveToTrash" => Ok(TorrentDeletion::MoveToTrash),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid torrent deletion: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for torrent deletion: {:?}",
+            v
+        ))),
+    }
+}
+
+pub fn torrent_deletion_to_string<S>(
+    value: &TorrentDeletion,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&value.to_string())
 }
 
 /// Where to save the torrent if it's appears in the specified folder.
@@ -916,117 +1272,18 @@ impl Serialize for ScanDir {
     }
 }
 
-/// The encryption type to use for SMTP notifications.
-// [qBittorrent #23838](https://github.com/qbittorrent/qBittorrent/pull/23838)
-#[cfg(feature = "qBittorrent-5_3")]
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
-pub enum SMTPEncryptionType {
-    None = 0,
-    STARTTLS = 1,
-    #[default]
-    SMTPS = 2,
-}
-
-/// The mode for share limits.
-// [qBittorrent #24043](https://github.com/qbittorrent/qBittorrent/pull/24043)
-#[cfg(feature = "qBittorrent-5_3")]
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(i8)]
-pub enum SeedLimitMode {
-    /// Use the default mode
-    #[default]
-    Default = -1, // special value
-
-    /// Match any of the share limits
-    MatchAny = 0,
-    /// Match all of the share limits
-    MatchAll = 1,
-}
-
-/// What action should be taken when the seeding limit is reached?
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(i8)]
-pub enum SeedLimitActions {
-    /// Use the default action
-    #[default]
-    Default = -1, // special value
-    /// Stop the torrent upon the limit being reached
-    StopTorrent = 0,
-    /// Remove the torrent upon the limit being reached
-    RemoveTorrent = 1,
-    /// Remove the torrent and files upon the limit being reached
-    RemoveTorrentFiles = 2,
-    /// Make the torrent use the super seeding algorithm upon the limit being reached.
-    TorrentSuperSeeding = 3,
-}
-
-/// Bittorrent protocols
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
-pub enum BittorrentProtocol {
-    /// To use both TCP and UTP
-    TcpUtp = 0,
-    #[default]
-    /// To just use TCP
-    Tcp = 1,
-    /// To just use UTP
-    Utp = 2,
-}
-
-/// Days on which the alternative speed limit schedule is applied.
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
-pub enum SchedulerTime {
-    /// Every day
-    #[default]
-    Day = 0,
-    /// Every Weekday
-    Weekday = 1,
-    /// Every Weekend
-    Weekend = 2,
-    /// Every Monday
-    Monday = 3,
-    /// Every Tuesday
-    Tuesday = 4,
-    /// Every Wednesday
-    Wednesday = 5,
-    /// Every Thursday
-    Thursday = 6,
-    /// Every Friday
-    Friday = 7,
-    /// Every Saturday
-    Saturday = 8,
-    /// Every Sunday
-    Sunday = 9,
-}
-
-/// Encryption states
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
-pub enum Encryption {
-    #[default]
-    /// Allows encryption for file transfer.
-    Allow = 0,
-    /// Requires encryption for file transfer.
-    Require = 1,
-    /// Disables encryption for file transfer.
-    Disable = 2,
-}
-
 /// The proxy protocol to use.
-#[repr(u8)]
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub enum ProxyType {
     /// Use no proxy at all
     #[default]
-    None = 0,
+    None,
     /// Use HTTP Protocol
-    Http = 1,
+    Http,
     /// Use SOCKS5 protocol
-    Socks5 = 2,
+    Socks5,
     /// Use SOCKS4 protocol
-    Socks4 = 5,
+    Socks4,
 }
 
 impl std::fmt::Display for ProxyType {
@@ -1044,79 +1301,35 @@ impl std::fmt::Display for ProxyType {
     }
 }
 
-/// Dyndns servcice types
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(i8)]
-pub enum DyndnsService {
-    /// No dynamic DNS service is selected.
-    None = -1,
-    #[default]
-    /// Uses DYN: https://account.dyn.com/
-    Dydns = 0,
-    /// Uses NO-IP: https://www.noip.com/
-    Noip = 1,
+pub fn string_to_proxy_type<'de, D>(deserializer: D) -> Result<ProxyType, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::String(s) => match s.as_str() {
+            "None" => Ok(ProxyType::None),
+            "HTTP" => Ok(ProxyType::Http),
+            "SOCKS5" => Ok(ProxyType::Socks5),
+            "SOCKS4" => Ok(ProxyType::Socks4),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid proxy type: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for proxy type: {:?}",
+            v
+        ))),
+    }
 }
 
-/// Upload choking algorithm
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
-pub enum UploadChokingAlgorithm {
-    #[default]
-    /// Rotate unchoked peers in a round-robin fashion, giving each peer a fair chance to upload.
-    RoundRobin = 0,
-    /// Prefer peers that currently offer the fastest upload throughput to maximise overall upload performance.
-    FastestUpload = 1,
-    /// Use anti-leech heuristics to deprioritize peers that do not contribute, favouring peers that upload data back.
-    AntiLeech = 2,
-}
-
-/// Algorithm to use for unchoking peers.
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
-pub enum UploadSlotsBehavior {
-    #[default]
-    /// Unchokes a fixed amount of seeders
-    Fixed = 0,
-    /// Opens up slots based on the upload rate achieved to peers.
-    UploadRate = 1,
-}
-
-/// μTP / TCP mixed-mode algorithm selection.
-///
-/// This setting controls how the client mixes uTP and TCP connections when both
-/// protocols are available. It determines the preference or distribution of
-/// connection attempts between the two transport protocols.
-#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
-pub enum UtpTcpMixedMode {
-    /// Prefer TCP connections when both TCP and uTP are available.
-    ///
-    /// When this mode is selected, the client will favour establishing TCP
-    /// connections over uTP ones whenever possible.
-    #[default]
-    PreferTcp = 0,
-    /// Distribute connections proportionally based on peer capabilities.
-    ///
-    /// In this mode the client attempts to balance or proportion connections
-    /// between TCP and uTP according to peer availability and characteristics,
-    /// rather than strictly preferring one protocol.
-    PeerProportional = 1,
-}
-
-/// Struct containing information about an individual cookie.
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
-pub struct Cookie {
-    /// The name of the cookie.
-    pub name: String,
-    /// The domain associated with the cookie.
-    pub domain: String,
-    /// The path associated with the cookie.
-    pub path: String,
-    /// The value stored in the cookie.
-    pub value: String,
-    /// The expiration date of the cookie, represented as seconds since the Unix epoch.
-    #[serde(rename = "expirationDate")]
-    pub expiration: i64,
+pub fn proxy_type_to_string<S>(value: &ProxyType, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&value.to_string())
 }
 
 /// The type of results to get back whilst doing `get_directory_contents`
@@ -1147,84 +1360,40 @@ impl Display for DirMode {
     }
 }
 
-/// Is the OS allowed to cache read data from files?
-///
-/// See https://www.libtorrent.org/reference-Settings.html#disk_io_read_mode for more information.
-#[repr(u8)]
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub enum DiskRead {
-    /// Don't Allow the OS to cache read data.
-    Disable = 0,
-    /// Allow the OS to cache read data.
-    #[default]
-    Enable = 1,
-}
+pub fn deserialize_dir_mode<'de, D>(deserializer: D) -> Result<DirMode, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
 
-/// Is the OS allowed to cache write data to files?
-///
-/// See https://www.libtorrent.org/reference-Settings.html#disk_io_write_mode for more information.
-#[repr(u8)]
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub enum DiskWrite {
-    /// Don't Allow the OS to cache write data.
-    Disable = 0,
-    /// Allow the OS to cache write data.
-    #[default]
-    Enable = 1,
-    /// FLushes pieces to disk as they complete validation.
-    ///
-    /// Requires LibTorrent >= 2.0.6
-    WriteThrough = 2,
-}
-
-/// Disk I/O constructor selection.
-///
-/// See: https://www.libtorrent.org/single-page-ref.html#default-disk-io-constructor
-///
-/// Enum values sourced from VueTorrent. Choose how libtorrent should perform
-/// disk I/O for reading and writing torrent data.
-#[repr(u8)]
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub enum DiskIOType {
-    /// Use the library's default behaviour: memory-mapped I/O when available,
-    /// otherwise fall back to POSIX-based I/O.
-    #[default]
-    Default = 0,
-    /// Use memory-mapped files (mmap) for disk I/O. This can improve performance
-    /// by mapping file contents directly into memory.
-    MemoryMappedFiles = 1,
-    /// Use POSIX-compliant file I/O methods. This variant selects a POSIX-style
-    /// approach (e.g., pread/pwrite semantics) for compatibility on POSIX systems.
-    PosixComplaint = 2,
-    /// Use single pread/pwrite operations for reads and writes.
-    /// This is a more basic I/O method that performs single-shot read/write calls.
-    SinglePReadWrite = 3,
-    /// Use pread/pwrite operations for reads and writes.
-    PreadPwrite = 4,
-}
-
-/// The type of age
-#[repr(i8)]
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub enum FileAge {
-    /// After X days
-    Day = 0,
-    /// After X months
-    #[default]
-    Month = 1,
-    /// After X years
-    Year = 2,
+    match v {
+        JsonValue::Number(n) => {
+            let n = n.as_i64().unwrap_or(2);
+            match n {
+                0 => Ok(DirMode::Dirs),
+                1 => Ok(DirMode::Files),
+                2 => Ok(DirMode::All),
+                _ => Err(serde::de::Error::custom(format!(
+                    "invalid dir mode number: {}",
+                    n
+                ))),
+            }
+        }
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for dir mode: {:?}",
+            v
+        ))),
+    }
 }
 
 /// The file structure to use for the fastresume file.
-#[repr(u8)]
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum FastResumeType {
     /// Use the "legacy" file format
     #[default]
-    Files = 0,
+    Files,
     /// Use the experimental SQLite Database format.
-    SQLite = 1,
+    SQLite,
 }
 
 impl std::fmt::Display for FastResumeType {
@@ -1238,4 +1407,36 @@ impl std::fmt::Display for FastResumeType {
             }
         )
     }
+}
+
+pub fn string_to_fast_resume_type<'de, D>(deserializer: D) -> Result<FastResumeType, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::String(s) => match s.as_str() {
+            "Legacy" => Ok(FastResumeType::Files),
+            "SQLite" => Ok(FastResumeType::SQLite),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid fast resume type: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for fast resume type: {:?}",
+            v
+        ))),
+    }
+}
+
+pub fn fast_resume_type_to_string<S>(
+    value: &FastResumeType,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&value.to_string())
 }
