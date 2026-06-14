@@ -24,9 +24,9 @@ pub struct TorrentListParams {
     /// Sort torrents by given key. They can be sorted using any field of the response's JSON array (see `TorrentSort`) as the sort key.
     #[builder(setter(strip_option), default)]
     pub sort: Option<TorrentSort>,
-    /// Enable reverse sorting. Defaults to `false`
-    #[builder(default)]
-    pub reverse: bool,
+    /// Enable reverse sorting. Defaults to `false` if not set
+    #[builder(setter(strip_option), default)]
+    pub reverse: Option<bool>,
     /// Limit the number of torrents returned
     #[builder(setter(into, strip_option), default)]
     pub limit: Option<i64>,
