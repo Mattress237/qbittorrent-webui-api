@@ -296,7 +296,7 @@ pub struct Preferences {
     pub scheduler_days: SchedulerTime,
 
     // ========== BitTorrent Protocol ==========
-    /// Bittorrent Protocol to use (see list of possible values below)
+    /// Bittorrent Protocol to use
     pub bittorrent_protocol: BittorrentProtocol,
     /// Should `dl_limit` be applied to uTP connections?
     ///
@@ -306,7 +306,7 @@ pub struct Preferences {
     pub limit_tcp_overhead: bool,
     /// Should `dl_limit` be applied to peers on the LAN?
     pub limit_lan_peers: bool,
-    /// μTP-TCP mixed mode algorithm (see list of possible values below)
+    /// μTP-TCP mixed mode algorithm
     pub utp_tcp_mixed_mode: UtpTcpMixedMode,
 
     // ========== Peer Discovery ==========

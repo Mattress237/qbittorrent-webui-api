@@ -437,8 +437,8 @@ pub struct TorrentProperties {
 pub struct Tracker {
     /// Tracker url
     pub url: String,
-    /// Tracker status. See the table below for possible values
-    pub status: i64,
+    /// Tracker status.
+    pub status: TrackerStatus,
     /// Tracker priority tier. Lower tier trackers are tried before higher
     /// tiers. Tier numbers are valid when `>= 0`, `< 0` is used as placeholder
     /// when `tier` does not exist for special entries (such as DHT).
@@ -453,6 +453,23 @@ pub struct Tracker {
     pub num_downloaded: i64,
     /// Tracker message (there is no way of knowing what this message is - it's up to tracker admins)
     pub msg: String,
+}
+
+/// Torrent tracker status
+#[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
+#[repr(u8)]
+pub enum TrackerStatus {
+    /// Tracker is disabled (used for DHT, PeX, and LSD)
+    #[default]
+    Disabled = 0,
+    /// Tracker has not been contacted yet
+    NotContacted = 1,
+    /// Tracker has been contacted and is working
+    Working = 2,
+    /// Tracker is updating
+    Updating = 3,
+    /// Tracker has been contacted, but it is not working (or doesn't send proper replies)
+    NotWorking = 4,
 }
 
 /// Web seed for torrent
