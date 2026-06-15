@@ -1,23 +1,21 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+#[cfg(not(feature = "qBittorrent-5_1"))]
+use serde_json::Value as JsonValue;
 
 use crate::models::{ConnectionStatus, TorrentsMap};
 use crate::utilities::{deserializers, serializers};
 
 /// Main response data object
+///
+/// Syncronizason object sendt from the qBittorrent server
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct MainData {
     /// Response ID
-    pub rid: i64,
+    pub rid: i32,
     /// Whether the response contains all the data or partial data
     pub full_update: Option<bool>,
-    /// List of Torrents
-    ///
-    /// Property: torrent hash, value: TorrentInfo
-    pub torrents: Option<TorrentsMap>,
-    /// List of hashes of torrents removed since last request
-    pub torrents_removed: Option<Vec<String>>,
     /// Info for categories added since last request
     pub categories: Option<HashMap<String, Category>>,
     /// List of categories removed since last request
@@ -26,10 +24,18 @@ pub struct MainData {
     pub tags: Option<Vec<String>>,
     /// List of tags removed since last request
     pub tags_removed: Option<Vec<String>>,
-    /// Global transfer info
-    pub server_state: Option<ServerState>,
+    /// List of Torrents
+    ///
+    /// Property: torrent hash, value: TorrentInfo
+    pub torrents: Option<TorrentsMap>,
+    /// List of hashes of torrents removed since last request
+    pub torrents_removed: Option<Vec<String>>,
     /// List of trackers
     pub trackers: Option<HashMap<String, Vec<String>>>,
+    /// List of trackers removed since last request
+    pub trackers_removed: Option<Vec<String>>,
+    /// Global transfer info
+    pub server_state: Option<ServerState>,
 }
 
 /// Category response data object
@@ -40,6 +46,70 @@ pub struct Category {
     /// Category save path
     #[serde(rename = "savePath")]
     pub save_path: String,
+    // if not set on the server, the value is received as `json:null`
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    pub download_path: Option<String>,
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    pub inactive_seeding_time_limit: i32,
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    pub seeding_time_limit: i32,
+    /// Limit ratio to this value
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    pub ratio_limit: f64,
+    /// Action to take when share limit is reached
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    #[serde(deserialize_with = "string_to_share_limit_action")]
+    pub share_limit_action: ShareLimitAction,
+}
+
+#[cfg(not(feature = "qBittorrent-5_1"))]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+pub enum ShareLimitAction {
+    #[default]
+    Default = -1,
+    Stop = 0,
+    Remove = 1,
+    RemoveWithContent = 2,
+    EnableSuperSeeding = 3,
+}
+
+#[cfg(not(feature = "qBittorrent-5_1"))]
+impl std::fmt::Display for ShareLimitAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Default => write!(f, "Default"),
+            Self::Stop => write!(f, "Stop"),
+            Self::Remove => write!(f, "Remove"),
+            Self::RemoveWithContent => write!(f, "RemoveWithContent"),
+            Self::EnableSuperSeeding => write!(f, "EnableSuperSeeding"),
+        }
+    }
+}
+
+#[cfg(not(feature = "qBittorrent-5_1"))]
+pub fn string_to_share_limit_action<'de, D>(deserializer: D) -> Result<ShareLimitAction, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::String(s) => match s.as_str() {
+            "Default" => Ok(ShareLimitAction::Default),
+            "Stop" => Ok(ShareLimitAction::Stop),
+            "Remove" => Ok(ShareLimitAction::Remove),
+            "RemoveWithContent" => Ok(ShareLimitAction::RemoveWithContent),
+            "EnableSuperSeeding" => Ok(ShareLimitAction::EnableSuperSeeding),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid share limit action: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for share limit action: {:?}",
+            v
+        ))),
+    }
 }
 
 /// Server state response data object.

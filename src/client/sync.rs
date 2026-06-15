@@ -32,7 +32,7 @@ impl super::Api {
     ///     println!("{:#?}", data);
     /// }
     /// ```
-    pub async fn main_data(&self, rid: Option<i64>) -> Result<MainData, Error> {
+    pub async fn main_data(&self, rid: Option<i32>) -> Result<MainData, Error> {
         let mut query = vec![];
         if let Some(rid) = rid {
             query.push(("rid", rid));
