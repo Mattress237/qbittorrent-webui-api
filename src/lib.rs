@@ -45,6 +45,11 @@ pub use client::Api;
 pub use error::Error;
 use serde::{Deserialize, Serialize};
 
+#[cfg(all(feature = "qBittorrent-5_1", feature = "qBittorrent-5_3"))]
+compile_error!(
+    "Features 'qBittorrent-5_1' and 'qBittorrent-5_3' are not intended to be used together. Please use only one of them."
+);
+
 /// Login state
 ///
 /// Represents the authentication state of a user in the system.
