@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[cfg(not(feature = "qBittorrent-5_1"))]
 use serde_json::Value as JsonValue;
 
@@ -215,6 +215,7 @@ pub struct ServerState {
 }
 
 /// Peers response data object.
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/webui/api/synccontroller.cpp
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct PeersData {
     /// Response ID
@@ -222,50 +223,107 @@ pub struct PeersData {
     /// Whether the response contains all the data or partial data
     pub full_update: Option<bool>,
     /// Flags
-    pub show_flags: Option<bool>,
+    pub show_flags: bool,
     /// List of peers
     pub peers: Option<HashMap<String, Peer>>,
-    /// List of removed peers
-    pub peers_removed: Option<Vec<String>>,
+    // Cant find the field???
+    // /// List of removed peers
+    // pub peers_removed: Option<Vec<String>>,
 }
 
 /// Peer response data object.
 ///
 /// All of the values are based on the last time the request got sent.
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/peerinfo.h
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Peer {
     /// Client used by the peer. (μTorrent, qBittorrent, etc...)
-    pub client: Option<String>,
-    /// Used connection
-    pub connection: Option<String>,
-    /// Location
-    pub country: Option<String>,
-    /// country code
-    pub country_code: Option<String>,
-    /// Download speed
-    pub dl_speed: Option<i64>,
-    /// Total downloaded
-    pub downloaded: Option<i64>,
-    /// Files/contents
-    pub files: Option<String>,
-    /// Flags
-    pub flags: Option<String>,
-    /// Flags description
-    pub flags_desc: Option<String>,
-    /// Connection IP
-    pub ip: Option<String>,
+    pub client: String,
     /// Client id
-    pub peer_id_client: Option<String>,
-    /// Connection port
-    pub port: Option<i64>,
+    pub peer_id_client: String,
     /// How much has the specified peer already downloaded.
-    pub progress: Option<f32>,
-    /// The ratio of the number of pieces the peer have but you don't have to the total number of pieces you don't have.
+    pub progress: f64,
+    /// Download speed
+    pub dl_speed: i32,
+    /// Upload speed
+    pub up_speed: i32,
+    /// Total downloaded
+    pub downloaded: i64,
+    /// Total uploaded
+    pub uploaded: i64,
+    /// Used connection
+    pub connection: PeerConnectionType, // make enum
+    /// Flags
+    pub flags: String,
+    /// Flags description
+    pub flags_desc: String,
+    /// The ratio of the number of pieces the peer have but you don't have to
+    /// the total number of pieces you don't have.
     ///
     /// See https://github.com/qbittorrent/qBittorrent/issues/18536 for more information.
-    pub relevance: Option<f32>,
-    /// Upload speed
-    pub up_speed: Option<i64>,
-    /// Total uploaded
-    pub uploaded: Option<i64>,
+    pub relevance: f64,
+    #[cfg(feature = "qBittorrent-5_3")]
+    // [#23989](https://github.com/qbittorrent/qBittorrent/pull/23989)
+    /// Contribution
+    ///
+    /// Contribution helps users identify how much of a peer's current progress
+    /// is directly attributable to this client's uploads
+    pub contribution: f64,
+    /// Files/contents
+    pub files: Option<String>,
+    pub i2p_dest: Option<String>,
+    /// Connection IP
+    pub ip: Option<String>,
+    /// Connection port
+    pub port: Option<u16>,
+    /// Hostname
+    pub host_name: Option<String>,
+    /// country code
+    pub country_code: Option<String>,
+    /// Location
+    pub country: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum PeerConnectionType {
+    /// μTP
+    UTP,
+    #[default]
+    BT,
+    Web,
+}
+
+impl Serialize for PeerConnectionType {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl PeerConnectionType {
+    pub fn as_str(&self) -> &str {
+        match self {
+            PeerConnectionType::UTP => "μTP",
+            PeerConnectionType::BT => "BT",
+            PeerConnectionType::Web => "Web",
+        }
+    }
+}
+
+// deserialize
+impl<'de> Deserialize<'de> for PeerConnectionType {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s: String = Deserialize::deserialize(deserializer)?;
+        match s.as_str() {
+            "μTP" => Ok(PeerConnectionType::UTP),
+            "BT" => Ok(PeerConnectionType::BT),
+            "Web" => Ok(PeerConnectionType::Web),
+            _ => Err(serde::de::Error::custom("invalid peer connection type")),
+        }
+    }
 }
