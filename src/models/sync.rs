@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 
 use crate::models::{ConnectionStatus, TorrentsMap};
-use crate::utilities::{deserializers, serializers};
 
 /// Main response data object
 ///
@@ -115,86 +114,104 @@ where
 /// Server state response data object.
 ///
 /// All of the values are based depending on the last time the request got sent.
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/webui/api/synccontroller.cpp
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/sessionstatus.h
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/cachestatus.h
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/session.h
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct ServerState {
+    /// Download speed
+    pub dl_info_speed: i64,
+    /// Download data
+    pub dl_info_data: i64,
+    /// Upload speed
+    pub up_info_speed: i64,
+    /// Upload data
+    pub up_info_data: i64,
+    /// Download rate limit
+    pub dl_rate_limit: i32,
+    /// Upload rate limit
+    pub up_rate_limit: i32,
     /// Alltime download
     pub alltime_dl: i64,
     /// Alltime upload
     pub alltime_ul: i64,
-    /// Average time in queue in ms
-    pub average_time_queue: i64,
-    /// Connection status
-    pub connection_status: ConnectionStatus,
-    /// DHT nodes
-    pub dht_nodes: i64,
-    /// Download data
-    pub dl_info_data: i64,
-    /// Download speed
-    pub dl_info_speed: i64,
-    /// Download rate limit
-    pub dl_rate_limit: i64,
-    /// Free disk space
-    pub free_space_on_disk: i64,
-    /// Global ratio
-    #[serde(
-        deserialize_with = "deserializers::string_to_f64",
-        serialize_with = "serializers::f64_to_string"
-    )]
-    pub global_ratio: f64,
-    /// Last external IPv4 address
-    pub last_external_address_v4: String,
-    /// Last external IPv4 address
-    pub last_external_address_v6: String,
-    /// Queued IO jobs
-    pub queued_io_jobs: i64,
-    /// Torrent queueing (application perfence setting)
-    pub queueing: bool,
-    /// How many times the read cache has been hit
-    #[serde(
-        deserialize_with = "deserializers::string_to_u64",
-        serialize_with = "serializers::u64_to_string"
-    )]
-    pub read_cache_hits: u64,
-    /// How overloaded is the read cache.
-    ///
-    /// Calculated by read queue size / peer count
-    #[serde(
-        deserialize_with = "deserializers::string_to_u64",
-        serialize_with = "serializers::u64_to_string"
-    )]
-    pub read_cache_overload: u64,
-    /// Refresh Interval
-    pub refresh_interval: i64,
-    /// Total buffer size
-    pub total_buffers_size: i64,
-    /// Total peer connections
-    pub total_peer_connections: i64,
-    /// Total queued size
-    pub total_queued_size: i64,
     /// How much data has been wasted in this session. (in bytes)
     ///
     /// Wasted data contains:
     /// - Failed piece checks
     /// - Duplicate Downloads
     pub total_wasted_session: i64,
-    /// Upload data
-    pub up_info_data: i64,
-    /// Upload speed
-    pub up_info_speed: i64,
-    /// Upload rate limit
-    pub up_rate_limit: i64,
-    /// Alt speed enabeld
-    pub use_alt_speed_limits: bool,
-    /// Use subcategories
-    pub use_subcategories: Option<bool>,
-    /// How overloaded is the read cache.
+    /// Global ratio of download / upload
+    ///
+    /// It is the ratio of download speed to upload speed. It retunes a `-` when
+    /// the ratio is unknown or invalid.
+    ///
+    /// The value should be 0-100 with 2 decimal places.
+    // I set this field to a string to show the intended value from the webserver as a percentage
+    pub global_ratio: String,
+    /// Total peer connections
+    pub total_peer_connections: i64,
+    /// How many times the read cache has been hit.
+    /// It returns percentage calculation of cache hits.
+    ///
+    /// The value should be 0-100 with 2 decimal places.
+    // I set this field to a string to show the intended value from the webserver as a percentage
+    pub read_cache_hits: String,
+    /// Total buffer size
+    pub total_buffers_size: i64,
+    /// How overloaded is the write cache.
+    /// It returns percentage calculation of cache overload.
     ///
     /// Calculated by write queue size / peer count
-    #[serde(
-        deserialize_with = "deserializers::string_to_u64",
-        serialize_with = "serializers::u64_to_string"
-    )]
-    pub write_cache_overload: u64,
+    ///
+    /// The value should be 0-100 with 2 decimal places.
+    // I set this field to a string to show the intended value from the webserver as a percentage
+    pub write_cache_overload: String,
+    /// How overloaded is the read cache.
+    /// It returns percentage calculation of cache overload.
+    ///
+    /// Calculated by read queue size / peer count
+    ///
+    /// The value should be 0-100 with 2 decimal places.
+    // I set this field to a string to show the intended value from the webserver as a percentage
+    pub read_cache_overload: String,
+    /// Queued IO jobs
+    pub queued_io_jobs: i64,
+    /// Average time in queue in ms
+    pub average_time_queue: i64,
+    /// Total queued size
+    pub total_queued_size: i64,
+    #[cfg(feature = "qBittorrent-5_3")]
+    //[#24152](https://github.com/qbittorrent/qBittorrent/pull/24152)
+    /// The time it takes from receiving a request from a peer until we're
+    /// sending the response back on the socket.
+    pub request_latency: i64,
+    /// Last external IPv4 address
+    pub last_external_address_v4: String,
+    /// Last external IPv4 address
+    pub last_external_address_v6: String,
+    /// DHT nodes
+    pub dht_nodes: i64,
+    /// Connection status
+    pub connection_status: ConnectionStatus,
+    #[cfg(feature = "qBittorrent-5_3")]
+    // [#24084](https://github.com/qbittorrent/qBittorrent/pull/24084)
+    /// The number of queued tracker announces.
+    ///
+    /// It shows the number of currently queued tracker announces.
+    pub queued_tracker_announces: i64,
+    /// Free disk space
+    pub free_space_on_disk: i64,
+    /// Torrent queueing (application perfence setting)
+    pub queueing: bool,
+    /// Alt speed enabeld
+    pub use_alt_speed_limits: bool,
+    /// Refresh Interval
+    pub refresh_interval: i32,
+    #[cfg(feature = "qBittorrent-5_1")]
+    /// Use subcategories
+    pub use_subcategories: Option<bool>,
 }
 
 /// Peers response data object.
