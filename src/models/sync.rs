@@ -223,7 +223,7 @@ pub struct PeersData {
     /// Whether the response contains all the data or partial data
     pub full_update: Option<bool>,
     /// Flags
-    pub show_flags: bool,
+    pub show_flags: Option<bool>,
     /// List of peers
     pub peers: Option<HashMap<String, Peer>>,
     // Cant find the field???

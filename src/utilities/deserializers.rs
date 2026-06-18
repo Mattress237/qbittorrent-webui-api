@@ -22,57 +22,57 @@ where
     Ok(value.unwrap_or_default())
 }
 
-pub fn string_to_f64<'de, D>(deserializer: D) -> Result<f64, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let v = JsonValue::deserialize(deserializer)?;
+// pub fn string_to_f64<'de, D>(deserializer: D) -> Result<f64, D::Error>
+// where
+//     D: serde::Deserializer<'de>,
+// {
+//     let v = JsonValue::deserialize(deserializer)?;
 
-    match v {
-        JsonValue::Number(n) => n
-            .as_f64()
-            .ok_or_else(|| serde::de::Error::custom("invalid number for f64")),
-        JsonValue::String(s) => {
-            let t = s.trim();
-            if t.is_empty() || t == "-" {
-                Ok(0.0)
-            } else {
-                s.parse::<f64>().map_err(serde::de::Error::custom)
-            }
-        }
-        JsonValue::Null => Ok(0.0),
-        other => Err(serde::de::Error::custom(format!(
-            "unexpected type for f64 deserialization: {:?}",
-            other
-        ))),
-    }
-}
+//     match v {
+//         JsonValue::Number(n) => n
+//             .as_f64()
+//             .ok_or_else(|| serde::de::Error::custom("invalid number for f64")),
+//         JsonValue::String(s) => {
+//             let t = s.trim();
+//             if t.is_empty() || t == "-" {
+//                 Ok(0.0)
+//             } else {
+//                 s.parse::<f64>().map_err(serde::de::Error::custom)
+//             }
+//         }
+//         JsonValue::Null => Ok(0.0),
+//         other => Err(serde::de::Error::custom(format!(
+//             "unexpected type for f64 deserialization: {:?}",
+//             other
+//         ))),
+//     }
+// }
 
-pub fn string_to_u64<'de, D>(deserializer: D) -> Result<u64, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let v = JsonValue::deserialize(deserializer)?;
+// pub fn string_to_u64<'de, D>(deserializer: D) -> Result<u64, D::Error>
+// where
+//     D: serde::Deserializer<'de>,
+// {
+//     let v = JsonValue::deserialize(deserializer)?;
 
-    match v {
-        JsonValue::Number(n) => n
-            .as_u64()
-            .ok_or_else(|| serde::de::Error::custom("invalid number for u64")),
-        JsonValue::String(s) => {
-            let t = s.trim();
-            if t.is_empty() || t == "-" {
-                Ok(0)
-            } else {
-                s.parse::<u64>().map_err(serde::de::Error::custom)
-            }
-        }
-        JsonValue::Null => Ok(0),
-        other => Err(serde::de::Error::custom(format!(
-            "unexpected type for u64 deserialization: {:?}",
-            other
-        ))),
-    }
-}
+//     match v {
+//         JsonValue::Number(n) => n
+//             .as_u64()
+//             .ok_or_else(|| serde::de::Error::custom("invalid number for u64")),
+//         JsonValue::String(s) => {
+//             let t = s.trim();
+//             if t.is_empty() || t == "-" {
+//                 Ok(0)
+//             } else {
+//                 s.parse::<u64>().map_err(serde::de::Error::custom)
+//             }
+//         }
+//         JsonValue::Null => Ok(0),
+//         other => Err(serde::de::Error::custom(format!(
+//             "unexpected type for u64 deserialization: {:?}",
+//             other
+//         ))),
+//     }
+// }
 
 pub fn string_to_vec_newline_separated<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
 where
