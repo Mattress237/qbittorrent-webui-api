@@ -238,37 +238,37 @@ pub struct PeersData {
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Peer {
     /// Client used by the peer. (μTorrent, qBittorrent, etc...)
-    pub client: String,
+    pub client: Option<String>,
     /// Client id
-    pub peer_id_client: String,
+    pub peer_id_client: Option<String>,
     /// How much has the specified peer already downloaded.
-    pub progress: f64,
+    pub progress: Option<f64>,
     /// Download speed
-    pub dl_speed: i32,
+    pub dl_speed: Option<i32>,
     /// Upload speed
-    pub up_speed: i32,
+    pub up_speed: Option<i32>,
     /// Total downloaded
-    pub downloaded: i64,
+    pub downloaded: Option<i64>,
     /// Total uploaded
-    pub uploaded: i64,
+    pub uploaded: Option<i64>,
     /// Used connection
-    pub connection: PeerConnectionType, // make enum
+    pub connection: Option<PeerConnectionType>, // make enum
     /// Flags
-    pub flags: String,
+    pub flags: Option<String>,
     /// Flags description
-    pub flags_desc: String,
+    pub flags_desc: Option<String>,
     /// The ratio of the number of pieces the peer have but you don't have to
     /// the total number of pieces you don't have.
     ///
     /// See https://github.com/qbittorrent/qBittorrent/issues/18536 for more information.
-    pub relevance: f64,
+    pub relevance: Option<f64>,
     #[cfg(feature = "qBittorrent-5_3")]
     // [#23989](https://github.com/qbittorrent/qBittorrent/pull/23989)
     /// Contribution
     ///
     /// Contribution helps users identify how much of a peer's current progress
     /// is directly attributable to this client's uploads
-    pub contribution: f64,
+    pub contribution: Option<f64>,
     /// Files/contents
     pub files: Option<String>,
     pub i2p_dest: Option<String>,
