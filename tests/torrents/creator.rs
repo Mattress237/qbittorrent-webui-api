@@ -1,7 +1,4 @@
-use qbit::{
-    Error,
-    models::{TaskStatus, TorrentCreatorBuilder},
-};
+use qbit::{Error, models::TaskStatus, parameters::TorrentCreatorBuilder};
 
 use crate::{create_dummy_torrent, create_random_name, create_test_data, login_default_client};
 use std::{env, fs, thread, time::Duration};

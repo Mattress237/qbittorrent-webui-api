@@ -1,8 +1,8 @@
 use dotenv::dotenv;
 use qbit::{
     Api,
-    models::{Torrent, TorrentCreatorBuilder, TorrentCreatorTask},
-    parameters::AddTorrentBuilder,
+    models::{Torrent, TorrentCreatorTask},
+    parameters::{AddTorrentBuilder, TorrentCreatorBuilder},
 };
 use rand::{RngExt, distr::Alphabetic};
 use std::{env, fs};
@@ -133,6 +133,29 @@ pub fn create_test_data() -> String {
     // Edited so that the folder path is returned as the server temporary test directory
     // path::absolute(folder).unwrap().display().to_string()
     env::var("SERVER_TEMP_DIR").unwrap()
+}
+
+pub fn create_test_data_dummy_folder(name: String) -> (String, String) {
+    let server_folder = format!("{}/_data/{name}", create_test_data());
+    let folder = format!("{}/_data/{name}", env::var("TEMP_DIR").unwrap());
+    fs::create_dir_all(&folder).unwrap_or_default();
+    println!(
+        "{} : {}",
+        format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap()),
+        format!("{folder}/dummy.txt")
+    );
+    println!(
+        "{:?} : {:?}",
+        fs::exists(format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap())),
+        fs::exists(format!("{folder}/dummy.txt"))
+    );
+    fs::copy(
+        format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap()),
+        format!("{folder}/dummy.txt"),
+    )
+    .unwrap();
+
+    (server_folder, folder)
 }
 
 pub async fn create_dummy_torrent(

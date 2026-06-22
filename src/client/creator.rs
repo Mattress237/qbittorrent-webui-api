@@ -4,7 +4,8 @@ use bytes::Bytes;
 
 use crate::{
     Error,
-    models::{TorrentCreator, TorrentCreatorTask, TorrentCreatorTaskStatus},
+    models::{TorrentCreatorTask, TorrentCreatorTaskStatus},
+    parameters::TorrentCreator,
 };
 
 impl super::Api {
@@ -14,7 +15,7 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
-    /// use qbit::models::TorrentCreator;
+    /// use qbit::parameters::TorrentCreator;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -166,7 +167,7 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
-    /// use qbit::models::TorrentCreator;
+    /// use qbit::parameters::TorrentCreator;
     ///
     /// #[tokio::main]
     /// async fn main() {

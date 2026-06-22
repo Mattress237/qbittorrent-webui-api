@@ -32,6 +32,19 @@ where
     serializer.serialize_str(&value.join(";"))
 }
 
+pub fn option_vec_to_string_pipe_separated<S>(
+    value: &Option<Vec<String>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(v) => serializer.serialize_str(&v.join("|")),
+        None => serializer.serialize_none(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -116,6 +129,55 @@ mod tests {
 
             let result = serde_json::to_string(&test_data).unwrap();
             assert_eq!(result, "{\"value\":\"String;String2\"}");
+        }
+    }
+
+    #[cfg(test)]
+    mod vec_to_string_pipe_separated_tests {
+        use super::*;
+
+        #[derive(Debug, PartialEq, Serialize)]
+        struct TestDataVecString {
+            #[serde(serialize_with = "option_vec_to_string_pipe_separated")]
+            value: Option<Vec<String>>,
+        }
+
+        #[test]
+        fn from_none() {
+            let test_data = TestDataVecString { value: None };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":null}");
+        }
+
+        #[test]
+        fn from_empty() {
+            let test_data = TestDataVecString {
+                value: Some(vec![]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"\"}");
+        }
+
+        #[test]
+        fn from_single() {
+            let test_data = TestDataVecString {
+                value: Some(vec!["String".to_string()]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String\"}");
+        }
+
+        #[test]
+        fn from_vec() {
+            let test_data = TestDataVecString {
+                value: Some(vec!["String".to_string(), "String2".to_string()]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String|String2\"}");
         }
     }
 }

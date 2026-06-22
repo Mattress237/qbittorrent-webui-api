@@ -1,6 +1,5 @@
 use std::fmt::{Debug, Display};
 
-use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 /// The format of the torrent.
@@ -37,55 +36,6 @@ impl Display for TorrentFormat {
             }
         )
     }
-}
-
-/// Everything required to create a new torrent.
-#[derive(
-    Default, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Builder,
-)]
-pub struct TorrentCreator {
-    /// Source file (or directory) of current torrent. Must be a absolute path
-    #[builder(setter(into))]
-    pub source_path: String,
-    /// Format of the torrent.
-    #[builder(setter(into, strip_option), default)]
-    pub format: Option<TorrentFormat>,
-    /// How big a piece of the file is. (in Bytes). 0 = auto.
-    /// Note: If piece size is too big this can cause the torrent to fail to be added.
-    #[builder(setter(into, strip_option), default)]
-    pub piece_size: Option<TorrentPieceSize>,
-    /// Should optimize alignment
-    #[builder(default = Some(false))]
-    pub optimize_alignment: Option<bool>,
-    /// Size limit for padding files
-    ///
-    /// Used with other clients that are not `LibTorrent2`, shouldn't need to be
-    /// changed unless the client is different.
-    #[builder(setter(into, strip_option), default = Some(-1))]
-    pub padded_file_size_limit: Option<i64>,
-    /// Is the torrent private or not? (Won't distrubte on DHT network if private.)
-    #[builder(setter(into, strip_option), default)]
-    pub private: Option<bool>,
-    /// To start seeding the torrent as soon as the file is created.
-    #[builder(setter(into, strip_option), default)]
-    pub start_seeding: Option<bool>,
-    /// The path to save the generated `.torrent` file to.
-    #[builder(setter(into, strip_option), default)]
-    pub torrent_file_path: Option<String>,
-    /// List of trackers
-    #[builder(setter(into, strip_option), default)]
-    pub trackers: Option<Vec<String>>,
-    /// List of url seeds
-    #[builder(setter(into, strip_option), default)]
-    pub url_seeds: Option<Vec<String>>,
-    /// Source metadata field.
-    ///
-    /// Used for cross-seeding by some private trackers
-    #[builder(setter(into, strip_option), default)]
-    pub source: Option<String>,
-    /// A comment to attach to the torrent.
-    #[builder(setter(into, strip_option), default)]
-    pub comment: Option<String>,
 }
 
 /// A wrapper of a string, used to store the task_id just created.
@@ -132,7 +82,7 @@ impl PartialEq<TorrentCreatorTask> for &String {
 ///
 /// Custom values are allowed, however pre-made values have also been included.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct TorrentPieceSize(pub u64);
+pub struct TorrentPieceSize(pub i32);
 
 impl Default for TorrentPieceSize {
     fn default() -> Self {
@@ -140,8 +90,8 @@ impl Default for TorrentPieceSize {
     }
 }
 
-impl From<u64> for TorrentPieceSize {
-    fn from(value: u64) -> Self {
+impl From<i32> for TorrentPieceSize {
+    fn from(value: i32) -> Self {
         Self(value)
     }
 }
