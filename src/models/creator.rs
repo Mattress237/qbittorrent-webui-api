@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 /// The format of the torrent.
 ///
 /// See [torrent format hybrid v1 and v2](https://www.reddit.com/r/qBittorrent/comments/uiwchy/torrent_format_hybrid_v1_and_v2/) for more information
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Debug, Default)]
 pub enum TorrentFormat {
     /// Old version, uses SHA-1 for hashing.
     #[serde(rename = "v1")]
@@ -15,13 +15,8 @@ pub enum TorrentFormat {
     V2,
     /// Attempts to work with both v1 and v2 torrents.
     #[serde(rename = "hybrid")]
+    #[default]
     Hybrid,
-}
-
-impl Default for TorrentFormat {
-    fn default() -> Self {
-        Self::Hybrid
-    }
 }
 
 impl Display for TorrentFormat {
@@ -35,46 +30,6 @@ impl Display for TorrentFormat {
                 TorrentFormat::Hybrid => "hybrid",
             }
         )
-    }
-}
-
-/// A wrapper of a string, used to store the task_id just created.
-///
-/// Usages should be like a normal string.
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct TorrentCreatorTask {
-    /// The task id related to the torrent just created
-    #[serde(rename = "taskID")]
-    pub task_id: String,
-}
-
-impl From<String> for TorrentCreatorTask {
-    fn from(value: String) -> Self {
-        Self { task_id: value }
-    }
-}
-
-impl Display for TorrentCreatorTask {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.task_id)
-    }
-}
-
-impl PartialEq<TorrentCreatorTask> for String {
-    fn eq(&self, other: &TorrentCreatorTask) -> bool {
-        *self == other.task_id
-    }
-}
-
-impl PartialEq<TorrentCreatorTask> for &str {
-    fn eq(&self, other: &TorrentCreatorTask) -> bool {
-        *self == other.task_id
-    }
-}
-
-impl PartialEq<TorrentCreatorTask> for &String {
-    fn eq(&self, other: &TorrentCreatorTask) -> bool {
-        **self == other.task_id
     }
 }
 
@@ -166,7 +121,7 @@ impl TorrentPieceSize {
 /// The current status of the task
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum TaskStatus {
-    /// The task failed to complete, see `error_message` of `TorrentCreatorTaskStatus` for the reason why
+    /// The task failed to complete, see `error_message` of `TorrentCreatorTask` for the reason why
     Failed,
     /// The task is in the queue waiting to be processed
     Queued,
@@ -181,37 +136,37 @@ pub enum TaskStatus {
 /// Depending on the TaskStatus depends on which fields may or may not be included.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TorrentCreatorTaskStatus {
+pub struct TorrentCreatorTask {
+    /// The task id of the torrent
+    #[serde(rename = "taskID")]
+    pub task_id: String,
+    /// The path to the file / folder the torrent is uploading
+    pub source_path: String,
+    /// How big the pieces of the torrent is.
+    pub piece_size: TorrentPieceSize,
+    // https://github.com/qbittorrent/qBittorrent/pull/24346
+    #[cfg(feature = "qBittorrent-5_3")]
+    /// Whether to ignore dotfiles when creating the torrent.
+    pub ignore_dotfiles: bool,
+    /// Is the torrent private
+    pub private: bool,
+    /// The time this task got added
+    pub time_added: String,
     /// The format of the torrent.
     pub format: Option<TorrentFormat>,
-    /// An error message as to why the torrent failed to be created
-    pub error_message: Option<String>,
-    /// The comment attached to the torrent
-    pub comment: Option<String>,
     /// Should optimize alignment
     pub optimize_alignment: Option<bool>,
     /// Size limit for padding files
     ///
     /// Used with other clients that are not `LibTorrent2`, shouldn't need to be
     /// changed unless the client is different.
-    pub padded_file_size_limit: Option<i64>,
-    /// How big the pieces of the torrent is.
-    pub piece_size: TorrentPieceSize,
-    /// Is the torrent private
-    pub private: bool,
-    /// The path to the file / folder the torrent is uploading
-    pub source_path: String,
+    pub padded_file_size_limit: Option<i32>,
     /// The current status of the task
     pub status: TaskStatus,
-    /// The task id of the torrent
-    #[serde(rename = "taskID")]
-    pub task_id: String,
-    /// The time this task got added
-    pub time_added: String,
-    /// The time this task finished
-    pub time_finished: Option<String>,
-    /// The time this task started being processed
-    pub time_started: Option<String>,
+    /// The comment attached to the torrent
+    pub comment: Option<String>,
+    /// The path to the torrent file
+    pub torrent_file_path: Option<String>,
     /// Source metadata field.
     ///
     /// Used for cross-seeding by some private trackers
@@ -220,4 +175,15 @@ pub struct TorrentCreatorTaskStatus {
     pub trackers: Vec<String>,
     /// List of URL seeds
     pub url_seeds: Vec<String>,
+    /// The time this task started being processed
+    pub time_started: Option<String>,
+    /// The time this task finished
+    pub time_finished: Option<String>,
+    /// An error message as to why the torrent failed to be created
+    pub error_message: Option<String>,
+    /// Progress of the task
+    ///
+    /// Only available when the task is in progress
+    // Note: In the source code this typed as a `int`
+    pub progress: Option<i32>,
 }

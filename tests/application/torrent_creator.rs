@@ -23,7 +23,7 @@ pub async fn can_create_torrent() {
     let result = client.create_task(&parameters).await;
     assert!(result.is_ok());
 
-    cleanup_torrent_and_task(&client, &torrent_name, result.unwrap().task_id).await
+    cleanup_torrent_and_task(&client, &torrent_name, result.unwrap()).await
 }
 
 #[tokio::test]
@@ -47,7 +47,7 @@ pub async fn can_create_torrent_with_parameters() {
     let result = client.create_task(&parameters).await;
     assert!(result.is_ok());
 
-    cleanup_torrent_and_task(&client, &torrent_name, result.unwrap().task_id).await
+    cleanup_torrent_and_task(&client, &torrent_name, result.unwrap()).await
 }
 
 async fn cleanup_torrent_and_task(client: &crate::Api, torrent_name: &str, task_id: String) {

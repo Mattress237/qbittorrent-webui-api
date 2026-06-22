@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use qbit::{
     Api,
-    models::{Torrent, TorrentCreatorTask},
+    models::Torrent,
     parameters::{AddTorrentBuilder, TorrentCreatorBuilder},
 };
 use rand::{RngExt, distr::Alphabetic};
@@ -158,10 +158,7 @@ pub fn create_test_data_dummy_folder(name: String) -> (String, String) {
     (server_folder, folder)
 }
 
-pub async fn create_dummy_torrent(
-    client: &Api,
-    name: String,
-) -> Result<TorrentCreatorTask, qbit::Error> {
+pub async fn create_dummy_torrent(client: &Api, name: String) -> Result<String, qbit::Error> {
     let server_folder = create_test_data();
     let folder = format!("{}/_data/{name}", env::var("TEMP_DIR").unwrap());
     fs::create_dir_all(&folder).unwrap_or_default();
