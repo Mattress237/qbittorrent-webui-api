@@ -83,11 +83,13 @@ async fn get_tasks() {
         }
     }
 
-    cleanup_torrent_and_task(&client, &torrent_name, tasks[0].task_id.clone()).await;
+    cleanup_torrent_and_task(&client, &torrent_name, "".to_string()).await;
 }
 
 async fn cleanup_torrent_and_task(client: &crate::Api, torrent_name: &str, task_id: String) {
-    client.delete_task(task_id).await.unwrap();
+    if !task_id.is_empty() {
+        client.delete_task(task_id).await.unwrap();
+    }
     let torrent = client
         .torrents(None)
         .await
