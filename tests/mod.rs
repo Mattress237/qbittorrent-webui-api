@@ -9,6 +9,7 @@ use std::{env, fs};
 
 pub mod application;
 pub mod authentication;
+pub mod log;
 pub mod sync;
 pub mod torrents;
 

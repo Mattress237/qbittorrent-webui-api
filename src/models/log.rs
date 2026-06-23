@@ -4,29 +4,52 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 /// Log item data object
+///
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/logger.h
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct LogItem {
     /// ID of the message
-    pub id: i64,
-    /// Text of the message
-    pub message: String,
+    pub id: i32,
+    /// Type of the message
+    #[serde(rename = "type")]
+    pub log_type: LogType,
     /// Seconds since epoch
     ///
     /// (Note: switched from milliseconds to seconds in v4.5.0)
     pub timestamp: i64,
-    /// Type of the message
-    #[serde(rename = "type")]
-    pub log_type: LogType,
+    /// Text of the message
+    pub message: String,
+}
+
+/// Peer log item data object
+///
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/logger.h
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+pub struct LogPeers {
+    /// ID of the peer
+    pub id: i32,
+    /// Whether or not the peer was blocked
+    pub blocked: bool,
+    /// Seconds since epoch
+    pub timestamp: i64,
+    /// IP of the peer
+    pub ip: String,
+    /// Reason of the block
+    pub reason: String,
 }
 
 /// Log types
 ///
-/// Log levels used by the logger
+/// Filter log types by severity levels
+///
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/logger.h
 #[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
-#[repr(u8)]
+#[repr(i8)]
 pub enum LogType {
-    /// Include normal messages
+    /// Include all log types
     #[default]
+    All = -1,
+    /// Include normal messages
     Normal = 1,
     /// Include Information messages
     Info = 2,
@@ -42,6 +65,7 @@ impl Display for LogType {
             f,
             "{}",
             match self {
+                LogType::All => "all",
                 LogType::Normal => "normal",
                 LogType::Info => "info",
                 LogType::Warning => "warning",
@@ -49,19 +73,4 @@ impl Display for LogType {
             }
         )
     }
-}
-
-/// Peer log item data object
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
-pub struct LogPeers {
-    /// ID of the peer
-    pub id: i64,
-    /// IP of the peer
-    pub ip: String,
-    /// Seconds since epoch
-    pub timestamp: i64,
-    /// Whether or not the peer was blocked
-    pub blocked: bool,
-    /// Reason of the block
-    pub reason: String,
 }

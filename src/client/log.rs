@@ -38,7 +38,7 @@ impl super::Api {
     /// ```
     pub async fn log(
         &self,
-        last_known_id: Option<i64>,
+        last_known_id: Option<i32>,
         log_types: Option<Vec<LogType>>,
     ) -> Result<Vec<LogItem>, Error> {
         let mut query = HashMap::new();
@@ -91,7 +91,7 @@ impl super::Api {
     ///     }
     /// }
     /// ```
-    pub async fn peer_log(&self, last_known_id: Option<i64>) -> Result<Vec<LogPeers>, Error> {
+    pub async fn peer_log(&self, last_known_id: Option<i32>) -> Result<Vec<LogPeers>, Error> {
         let mut query = HashMap::new();
         if let Some(last_known_id) = last_known_id {
             query.insert("last_known_id".to_string(), last_known_id.to_string());
