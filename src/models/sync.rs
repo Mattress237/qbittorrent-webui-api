@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(not(feature = "qBittorrent-5_1"))]
-use serde_json::Value as JsonValue;
 
 use crate::models::{ConnectionStatus, TorrentsMap};
 
@@ -57,22 +55,24 @@ pub struct Category {
     pub ratio_limit: f64,
     /// Action to take when share limit is reached
     #[cfg(not(feature = "qBittorrent-5_1"))]
-    #[serde(deserialize_with = "string_to_share_limit_action")]
     pub share_limit_action: ShareLimitAction,
 }
 
-#[cfg(not(feature = "qBittorrent-5_1"))]
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub enum ShareLimitAction {
     #[default]
+    #[serde(rename = "Default")]
     Default = -1,
+    #[serde(rename = "Stop")]
     Stop = 0,
+    #[serde(rename = "Remove")]
     Remove = 1,
+    #[serde(rename = "RemoveWithContent")]
     RemoveWithContent = 2,
+    #[serde(rename = "EnableSuperSeeding")]
     EnableSuperSeeding = 3,
 }
 
-#[cfg(not(feature = "qBittorrent-5_1"))]
 impl std::fmt::Display for ShareLimitAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -82,32 +82,6 @@ impl std::fmt::Display for ShareLimitAction {
             Self::RemoveWithContent => write!(f, "RemoveWithContent"),
             Self::EnableSuperSeeding => write!(f, "EnableSuperSeeding"),
         }
-    }
-}
-
-#[cfg(not(feature = "qBittorrent-5_1"))]
-pub fn string_to_share_limit_action<'de, D>(deserializer: D) -> Result<ShareLimitAction, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let v = JsonValue::deserialize(deserializer)?;
-
-    match v {
-        JsonValue::String(s) => match s.as_str() {
-            "Default" => Ok(ShareLimitAction::Default),
-            "Stop" => Ok(ShareLimitAction::Stop),
-            "Remove" => Ok(ShareLimitAction::Remove),
-            "RemoveWithContent" => Ok(ShareLimitAction::RemoveWithContent),
-            "EnableSuperSeeding" => Ok(ShareLimitAction::EnableSuperSeeding),
-            _ => Err(serde::de::Error::custom(format!(
-                "invalid share limit action: {}",
-                s
-            ))),
-        },
-        _ => Err(serde::de::Error::custom(format!(
-            "unexpected type for share limit action: {:?}",
-            v
-        ))),
     }
 }
 

@@ -12,6 +12,7 @@ mod application;
 mod authentication;
 mod creator;
 mod log;
+mod rss;
 mod sync;
 mod torrents;
 
