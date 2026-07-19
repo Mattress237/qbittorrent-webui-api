@@ -2,7 +2,7 @@ use qbit::models::TorrentProperties;
 
 use crate::{DEBIAN_HASH, add_debian_torrent, login_default_client};
 
-/// This test ensures that the API correctly deserialize the torrents the response.
+/// This test ensures that the API correctly deserialize the torrent the response.
 #[tokio::test]
 #[ignore = "Test hits api endpoint"]
 async fn correctly_deserialize_from_response() {

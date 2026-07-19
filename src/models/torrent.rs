@@ -608,43 +608,126 @@ pub struct TorrentProperties {
 /// Torrent tracker object
 ///
 /// This struct contains detailed information about a tracker.
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/webui/api/torrentscontroller.cpp #getTrackers
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct Tracker {
     /// Tracker url
     pub url: String,
-    /// Tracker status.
-    pub status: TrackerStatus,
     /// Tracker priority tier. Lower tier trackers are tried before higher
     /// tiers. Tier numbers are valid when `>= 0`, `< 0` is used as placeholder
     /// when `tier` does not exist for special entries (such as DHT).
-    pub tier: i64,
-    /// Number of peers for current torrent, as reported by the tracker
-    pub num_peers: i64,
-    /// Number of seeds for current torrent, asreported by the tracker
-    pub num_seeds: i64,
-    /// Number of leeches for current torrent, as reported by the tracker
-    pub num_leeches: i64,
-    /// Number of completed downloads for current torrent, as reported by the tracker
-    pub num_downloaded: i64,
+    pub tier: i32,
+    /// Tracker is updating
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    // https://github.com/qbittorrent/qBittorrent/pull/23045
+    #[serde(default = "default_false")]
+    pub updating: bool,
     /// Tracker message (there is no way of knowing what this message is - it's up to tracker admins)
     pub msg: String,
+    /// Tracker status.
+    pub status: TrackerStatus,
+    /// Number of peers for current torrent, as reported by the tracker
+    #[serde(rename = "num_peers")]
+    pub peers_count: i32,
+    /// Number of seeds for current torrent, as reported by the tracker
+    #[serde(rename = "num_seeds")]
+    pub seeds_count: i32,
+    /// Number of leeches for current torrent, as reported by the tracker
+    #[serde(rename = "num_leeches")]
+    pub leeches_count: i32,
+    /// Number of completed downloads for current torrent, as reported by the tracker
+    #[serde(rename = "num_downloaded")]
+    pub downloaded_count: i32,
+    /// Next announce time
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    // https://github.com/qbittorrent/qBittorrent/pull/23045
+    #[serde(default = "default_zero")]
+    pub next_announce: i64,
+    /// Minimum announce interval
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    // https://github.com/qbittorrent/qBittorrent/pull/23045
+    #[serde(default = "default_zero")]
+    #[serde(rename = "min_announce")]
+    pub minimum_announce_interval: i64,
+    /// Tracker endpoints
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    // https://github.com/qbittorrent/qBittorrent/pull/23045
+    #[serde(default = "default_empty_vec")]
+    pub endpoints: Vec<TrackerEndpoint>,
+}
+
+#[cfg(not(feature = "qBittorrent-5_1"))]
+// https://github.com/qbittorrent/qBittorrent/pull/23045
+fn default_false() -> bool {
+    false
+}
+
+#[cfg(not(feature = "qBittorrent-5_1"))]
+// https://github.com/qbittorrent/qBittorrent/pull/23045
+fn default_zero() -> i64 {
+    0
+}
+
+#[cfg(not(feature = "qBittorrent-5_1"))]
+// https://github.com/qbittorrent/qBittorrent/pull/23045
+fn default_empty_vec() -> Vec<TrackerEndpoint> {
+    Vec::new()
+}
+
+#[cfg(not(feature = "qBittorrent-5_1"))]
+// https://github.com/qbittorrent/qBittorrent/pull/23045
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+pub struct TrackerEndpoint {
+    /// Endpoint name
+    pub name: String,
+    /// Endpoint is updating
+    pub updating: bool,
+    /// Endpoint status
+    pub status: TrackerStatus,
+    /// Endpoint message
+    pub msg: String,
+    /// Endpoint Bittorrent version
+    #[serde(rename = "bt_version")]
+    pub bittorrent_version: i32,
+    /// Number of peers for current torrent, as reported by the tracker
+    #[serde(rename = "num_peers")]
+    pub peers_count: i32,
+    /// Number of seeds for current torrent, as reported by the tracker
+    #[serde(rename = "num_seeds")]
+    pub seeds_count: i32,
+    /// Number of leeches for current torrent, as reported by the tracker
+    #[serde(rename = "num_leeches")]
+    pub leeches_count: i32,
+    /// Number of completed downloads for current torrent, as reported by the tracker
+    #[serde(rename = "num_downloaded")]
+    pub downloaded_count: i32,
+    /// Next announce time
+    pub next_announce: i64,
+    /// Minimum announce interval
+    #[serde(rename = "min_announce")]
+    pub minimum_announce_interval: i64,
 }
 
 /// Torrent tracker status
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/trackerentrystatus.h
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/trackerentrystatus.cpp
 #[derive(Debug, Deserialize_repr, Serialize_repr, Clone, Default, PartialEq)]
 #[repr(u8)]
 pub enum TrackerStatus {
-    /// Tracker is disabled (used for DHT, PeX, and LSD)
-    #[default]
-    Disabled = 0,
     /// Tracker has not been contacted yet
+    #[default]
     NotContacted = 1,
     /// Tracker has been contacted and is working
     Working = 2,
     /// Tracker is updating
+    #[cfg(feature = "qBittorrent-5_1")]
     Updating = 3,
     /// Tracker has been contacted, but it is not working (or doesn't send proper replies)
     NotWorking = 4,
+    /// Tracker error
+    TrackerErr = 5,
+    /// Tracker unreachable
+    Unreachable = 6,
 }
 
 /// Web seed for torrent
@@ -720,7 +803,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn test_serialize_torrent() {
+        fn torrent() {
             let mut torrent = Torrent::default();
             torrent.added_on = 6969;
             torrent.name = "serialization.txt".to_string();
@@ -736,7 +819,7 @@ mod tests {
         }
 
         #[test]
-        fn test_serialize_torrent_properties() {
+        fn torrent_properties() {
             let mut torrent = TorrentProperties::default();
             torrent.addition_date = 6969;
             torrent.name = "serialization.txt".to_string();
@@ -750,13 +833,51 @@ mod tests {
             assert!(data.contains("\"name\":\"serialization.txt\""));
             assert!(data.contains("\"hash\":\"aaaaaaaaaaaaaaaaaaaa\""));
         }
+
+        #[test]
+        fn tracker_basic() {
+            let mut tracker = Tracker::default();
+            tracker.url = "http://example.com".to_string();
+            tracker.msg = "example".to_string();
+            tracker.status = TrackerStatus::NotContacted;
+
+            let res = serde_json::to_string(&tracker);
+            assert!(res.is_ok());
+            let data = res.unwrap();
+            assert!(data.contains("\"url\":\"http://example.com\""));
+            assert!(data.contains("\"msg\":\"example\""));
+            assert!(data.contains("\"status\":1"));
+        }
+
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        // https://github.com/qbittorrent/qBittorrent/pull/23045
+        #[test]
+        fn tracker_extended_with_endpoints() {
+            let mut tracker = Tracker::default();
+            tracker.url = "http://example.com".to_string();
+            tracker.msg = "example".to_string();
+            tracker.status = TrackerStatus::NotContacted;
+            tracker.tier = 0;
+            tracker.updating = false;
+            tracker.endpoints = vec![TrackerEndpoint::default()];
+
+            let res = serde_json::to_string(&tracker);
+            assert!(res.is_ok());
+            let data = res.unwrap();
+            assert!(data.contains("\"url\":\"http://example.com\""));
+            assert!(data.contains("\"msg\":\"example\""));
+            assert!(data.contains("\"status\":1"));
+            assert!(data.contains("\"tier\":0"));
+            assert!(data.contains("\"updating\":false"));
+            assert!(data.contains("\"endpoints\":[{\""));
+        }
     }
 
     mod deserialization {
         use super::*;
 
         #[test]
-        fn test_deserialize_torrent() {
+        fn torrent() {
             #[allow(unused_mut)]
             let mut json = json!({
                 "hash": "ffffffffffffffffffffffffffffffffffffffff",
@@ -850,7 +971,7 @@ mod tests {
         }
 
         #[test]
-        fn test_deserialize_torrent_properties() {
+        fn torrent_properties() {
             #[allow(unused_mut)]
             let mut json = json!({
                 "infohash_v1": "ffffffffffffffffffffffffffffffffffffffff",
@@ -919,6 +1040,129 @@ mod tests {
             assert!(res.is_ok());
             let torrent = res.unwrap();
             assert_eq!(torrent.private, Some(true));
+        }
+
+        #[test]
+        fn tracker_basic() {
+            let json = json!({
+                "url": "http://tracker.example.com",
+                "tier": 0,
+                "msg": "test",
+                "status": 2,
+                "num_peers": 10,
+                "num_seeds": 5,
+                "num_leeches": 5,
+                "num_downloaded": 5,
+            });
+
+            let res: Result<Tracker, serde_json::Error> = serde_json::from_value(json);
+            // assert!(res.is_ok());
+
+            let tracker = res.unwrap();
+            assert_eq!(tracker.url, "http://tracker.example.com");
+            assert_eq!(tracker.tier, 0);
+            assert_eq!(tracker.msg, "test");
+            assert_eq!(tracker.status, TrackerStatus::Working);
+        }
+
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        // https://github.com/qbittorrent/qBittorrent/pull/23045
+        #[test]
+        fn tracker_extended() {
+            let json = json!({
+                "url": "http://tracker.example.com",
+                "tier": 0,
+                "updating": false,
+                "msg": "test",
+                "status": 2,
+                "num_peers": 10,
+                "num_seeds": 5,
+                "num_leeches": 5,
+                "num_downloaded": 5,
+                "next_announce": 0,
+                "min_announce": 0,
+                "endpoints": [],
+            });
+
+            let res: Result<Tracker, serde_json::Error> = serde_json::from_value(json);
+            // assert!(res.is_ok());
+
+            let tracker = res.unwrap();
+            assert_eq!(tracker.url, "http://tracker.example.com");
+            assert_eq!(tracker.tier, 0);
+            assert_eq!(tracker.msg, "test");
+            assert_eq!(tracker.status, TrackerStatus::Working);
+        }
+
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        // https://github.com/qbittorrent/qBittorrent/pull/23045
+        #[test]
+        fn tracker_extended_with_endpoints() {
+            let json = json!({
+                "url": "http://tracker.example.com",
+                "tier": 0,
+                "msg": "test",
+                "status": 2,
+                "num_peers": 10,
+                "num_seeds": 5,
+                "num_leeches": 5,
+                "num_downloaded": 5,
+                "next_announce": 0,
+                "min_announce": 0,
+                "endpoints": [
+                    {
+                        "name": "endpoint.example.com",
+                        "updating": false,
+                        "status": 2,
+                        "msg": "test",
+                        "bt_version": 69,
+                        "num_peers": 10,
+                        "num_seeds": 5,
+                        "num_leeches": 5,
+                        "num_downloaded": 5,
+                        "next_announce": 0,
+                        "min_announce": 0,
+                    },
+                ],
+            });
+
+            let res: Result<Tracker, serde_json::Error> = serde_json::from_value(json);
+            assert!(res.is_ok());
+
+            let tracker = res.unwrap();
+            assert_eq!(tracker.url, "http://tracker.example.com");
+            assert_eq!(tracker.tier, 0);
+            assert_eq!(tracker.msg, "test");
+            assert_eq!(tracker.status, TrackerStatus::Working);
+        }
+
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        // https://github.com/qbittorrent/qBittorrent/pull/23045
+        #[test]
+        fn tracker_endpoints() {
+            let json = json!({
+                "name": "endpoint.example.com",
+                "updating": false,
+                "status": 2,
+                "msg": "test",
+                "bt_version": 69,
+                "num_peers": 10,
+                "num_seeds": 5,
+                "num_leeches": 5,
+                "num_downloaded": 5,
+                "next_announce": 0,
+                "min_announce": 0,
+            });
+
+            let res: Result<TrackerEndpoint, serde_json::Error> = serde_json::from_value(json);
+            assert!(res.is_ok());
+
+            let endpoint = res.unwrap();
+            assert_eq!(endpoint.name, "endpoint.example.com");
+            assert!(!endpoint.updating);
+            assert_eq!(endpoint.status, TrackerStatus::Working);
+            assert_eq!(endpoint.msg, "test");
+            assert_eq!(endpoint.bittorrent_version, 69);
         }
     }
 }
