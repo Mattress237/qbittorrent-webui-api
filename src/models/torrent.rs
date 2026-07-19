@@ -488,79 +488,121 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
 /// Generic Torrent properties.
 ///
 /// This struct provides some generic data and statistics about a torrent.
+//
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/webui/api/torrentscontroller.cpp
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/torrent.cpp
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/base/bittorrent/torrent.h
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct TorrentProperties {
-    /// Torrent save path
-    pub save_path: String,
-    /// Torrent creation date (Unix timestamp)
-    pub creation_date: i64,
-    /// Torrent piece size (bytes)
-    pub piece_size: i64,
-    /// Torrent comment
-    pub comment: String,
-    /// Total data wasted for torrent (bytes)
-    pub total_wasted: i64,
-    /// Total data uploaded for torrent (bytes)
-    pub total_uploaded: i64,
-    /// Total data uploaded this session (bytes)
-    pub total_uploaded_session: i64,
-    /// Total data downloaded for torrent (bytes)
-    pub total_downloaded: i64,
-    /// Total data downloaded this session (bytes)
-    pub total_downloaded_session: i64,
-    /// Torrent upload limit (bytes/s)
-    pub up_limit: i64,
-    /// Torrent download limit (bytes/s)
-    pub dl_limit: i64,
+    /// The SHA-1 hash of the torrent's info dictionary (used in BitTorrent v1).
+    pub infohash_v1: String,
+    ///  SHA-256 hash of the torrent's info dictionary (used in BitTorrent v2).
+    pub infohash_v2: String,
+    /// Torrent name
+    pub name: String,
+    /// Torrent hash
+    pub hash: String,
     /// Torrent elapsed time (seconds)
     pub time_elapsed: i64,
     /// Torrent elapsed time while complete (seconds)
     pub seeding_time: i64,
-    /// Torrent connection count
-    pub nb_connections: i64,
-    /// Torrent connection count limit
-    pub nb_connections_limit: i64,
-    /// Torrent share ratio
-    pub share_ratio: f32,
-    /// When this torrent was added (unix timestamp)
-    pub addition_date: i64,
-    /// Torrent completion date (unix timestamp)
-    pub completion_date: i64,
-    /// Torrent creator
-    pub created_by: String,
-    /// Torrent average download speed (bytes/second)
-    pub dl_speed_avg: i64,
-    /// Torrent download speed (bytes/second)
-    pub dl_speed: i64,
     /// Torrent ETA (seconds)
     pub eta: i64,
-    /// Last seen complete date (unix timestamp)
-    pub last_seen: i64,
+    /// Torrent connection count
+    #[serde(rename = "nb_connections")]
+    pub connections_count: i32,
+    /// Torrent connection count limit
+    #[serde(rename = "nb_connections_limit")]
+    pub connections_limit: i32,
+    /// Total data downloaded for torrent (bytes)
+    pub total_downloaded: i64,
+    /// Total data downloaded this session (bytes)
+    pub total_downloaded_session: i64,
+    /// Total data uploaded for torrent (bytes)
+    pub total_uploaded: i64,
+    /// Total data uploaded this session (bytes)
+    pub total_uploaded_session: i64,
+    /// Torrent download speed (bytes/s)
+    #[serde(rename = "dl_speed")]
+    pub download_speed: i32,
+    /// Torrent average download speed (bytes/s)
+    #[serde(rename = "dl_speed_avg")]
+    pub download_speed_avg: i32,
+    /// Torrent upload speed (bytes/s)
+    #[serde(rename = "up_speed")]
+    pub upload_speed: i32,
+    /// Torrent average upload speed (bytes/second)
+    #[serde(rename = "up_speed_avg")]
+    pub upload_speed_avg: i32,
+    /// Torrent download limit (bytes/s)
+    #[serde(rename = "dl_limit")]
+    pub download_limit: i32,
+    /// Torrent upload limit (bytes/s)
+    #[serde(rename = "up_limit")]
+    pub upload_limit: i32,
+    /// Total data wasted for torrent (bytes)
+    pub total_wasted: i64,
+    /// Number of seeds connected to
+    pub seeds: i32,
+    /// Number of seeds in the swarm
+    pub seeds_total: i32,
     /// Number of peers connected to
-    pub peers: i64,
+    pub peers: i32,
     /// Number of peers in the swarm
-    pub peers_total: i64,
-    /// Number of pieces owned
-    pub pieces_have: i64,
-    /// Number of pieces of the torrent
-    pub pieces_num: i64,
+    pub peers_total: i32,
+    /// Torrent share ratio
+    pub share_ratio: f64,
+    /// Popularity of the torrent
+    pub popularity: f64,
+    /// Percentage of file pieces currently available
+    #[cfg(feature = "qBittorrent-5_3")]
+    // https://github.com/qbittorrent/qBittorrent/pull/23741
+    pub availability: f64,
     /// Number of seconds until the next announce
     pub reannounce: i64,
-    /// Number of seeds connected to
-    pub seeds: i64,
-    /// Number of seeds in the swarm
-    pub seeds_total: i64,
     /// Torrent total size (bytes)
     pub total_size: i64,
-    /// Torrent average upload speed (bytes/second)
-    pub up_speed_avg: i64,
-    /// Torrent upload speed (bytes/second)
-    pub up_speed: i64,
-    /// True if torrent is from a private tracker (added in 5.0.0)
+    /// Number of pieces of the torrent
+    #[serde(rename = "pieces_num")]
+    pub pieces_count: i32,
+    /// Torrent piece size (bytes)
+    pub piece_size: i64,
+    /// Number of pieces owned
+    pub pieces_have: i32,
+    /// Torrent creator
+    pub created_by: String,
+    /// Old `is_private` field will be removed at some point in the future
+    // https://github.com/qbittorrent/qBittorrent/pull/20833
+    pub is_private: bool,
+    /// True if torrent is from a private tracker
     ///
     /// The value will be `null` if the torrent metadata is not available yet.
     /// See issue [#10](https://github.com/Mattress237/qbittorrent-webui-api/issues/10)
+    // https://github.com/qbittorrent/qBittorrent/pull/20833
     pub private: Option<bool>,
+    /// When this torrent was added (unix timestamp)
+    pub addition_date: i64,
+    /// Last seen complete date (unix timestamp)
+    pub last_seen: i64,
+    /// Torrent completion date (unix timestamp)
+    pub completion_date: i64,
+    /// Torrent creation date (Unix timestamp)
+    pub creation_date: i64,
+    /// Torrent save path
+    pub save_path: String,
+    /// Path where the torrent's data is downloaded when incomplet.
+    ///
+    /// Empty when not used.
+    pub download_path: String,
+    /// Torrent comment metadata form the `.torrent` file
+    pub comment: String,
+    /// True if the torrent has metadata available
+    ///
+    /// Dependent on this being `true` or `false` fields like `private` may
+    /// have a undefinde value and might be using a default value or `None`
+    pub has_metadata: bool,
+    /// Torrent progress (percentage/100)
+    pub progress: f64,
 }
 
 /// Torrent tracker object
@@ -692,14 +734,31 @@ mod tests {
             assert!(data.contains("\"added_on\":6969"));
             assert!(data.contains("\"hash\":\"aaaaaaaaaaaaaaaaaaaa\""));
         }
+
+        #[test]
+        fn test_serialize_torrent_properties() {
+            let mut torrent = TorrentProperties::default();
+            torrent.addition_date = 6969;
+            torrent.name = "serialization.txt".to_string();
+            torrent.hash = "aaaaaaaaaaaaaaaaaaaa".to_string();
+
+            let res = serde_json::to_string(&torrent);
+            assert!(res.is_ok());
+
+            let data = res.unwrap();
+            assert!(data.contains("\"addition_date\":6969"));
+            assert!(data.contains("\"name\":\"serialization.txt\""));
+            assert!(data.contains("\"hash\":\"aaaaaaaaaaaaaaaaaaaa\""));
+        }
     }
 
     mod deserialization {
         use super::*;
 
-        fn get_base_json() -> serde_json::Value {
+        #[test]
+        fn test_deserialize_torrent() {
             #[allow(unused_mut)]
-            let mut base = json!({
+            let mut json = json!({
                 "hash": "ffffffffffffffffffffffffffffffffffffffff",
                 "infohash_v1": "ffffffffffffffffffffffffffffffffffffffff",
                 "infohash_v2": "",
@@ -758,33 +817,24 @@ mod tests {
                 "reannounce": 67,
                 "comment": "This is a comment",
             });
-
             #[cfg(not(feature = "qBittorrent-5_1"))]
             {
-                base["created_by"] = Value::String("Billy".to_string());
-                base["creation_date"] = Value::Number(Number::from(-1));
-                base["pieces_num"] = Value::Number(Number::from(2680));
-                base["piece_size"] = Value::Number(Number::from(262144));
-                base["total_wasted"] = Value::Number(Number::from(0));
-                base["pieces_have"] = Value::Number(Number::from(738));
-                base["connections_count"] = Value::Number(Number::from(2));
-                base["connections_limit"] = Value::Number(Number::from(100));
-                base["share_limit_action"] = Value::String("EnableSuperSeeding".to_string());
+                json["created_by"] = Value::String("Billy".to_string());
+                json["creation_date"] = Value::Number(Number::from(-1));
+                json["pieces_num"] = Value::Number(Number::from(2680));
+                json["piece_size"] = Value::Number(Number::from(262144));
+                json["total_wasted"] = Value::Number(Number::from(0));
+                json["pieces_have"] = Value::Number(Number::from(738));
+                json["connections_count"] = Value::Number(Number::from(2));
+                json["connections_limit"] = Value::Number(Number::from(100));
+                json["share_limit_action"] = Value::String("EnableSuperSeeding".to_string());
             }
-
             #[cfg(feature = "qBittorrent-5_3")]
             {
-                base["share_limits_mode"] = Value::String("MatchAny".to_string());
+                json["share_limits_mode"] = Value::String("MatchAny".to_string());
             }
 
-            base
-        }
-
-        #[test]
-        fn test_deserialize_torrent() {
-            let base = get_base_json();
-
-            let res: Result<Torrent, serde_json::Error> = serde_json::from_value(base);
+            let res: Result<Torrent, serde_json::Error> = serde_json::from_value(json);
             assert!(res.is_ok());
             let torrent = res.unwrap();
             assert_eq!(
@@ -797,6 +847,78 @@ mod tests {
             );
             assert_eq!(torrent.infohash_v2, "".to_string());
             assert_eq!(torrent.name, "file.pdf".to_string());
+        }
+
+        #[test]
+        fn test_deserialize_torrent_properties() {
+            #[allow(unused_mut)]
+            let mut json = json!({
+                "infohash_v1": "ffffffffffffffffffffffffffffffffffffffff",
+                "infohash_v2": "",
+                "name": "test.torrent",
+                "hash": "ffffffffffffffffffffffffffffffffffffffff",
+                "time_elapsed": 1337,
+                "seeding_time": 6243,
+                "eta": 69,
+                "nb_connections": 234,
+                "nb_connections_limit": 780,
+                "total_downloaded": 750,
+                "total_downloaded_session": 770,
+                "total_uploaded": 760,
+                "total_uploaded_session": 790,
+                "dl_speed":23,
+                "dl_speed_avg": 24,
+                "up_speed": 25,
+                "up_speed_avg": 26,
+                "dl_limit": 556,
+                "up_limit": 555,
+                "total_wasted": 650,
+                "seeds": 651,
+                "seeds_total": 652,
+                "peers": 1,
+                "peers_total": 23,
+                "share_ratio": 1.55,
+                "popularity": 2.2,
+                "reannounce": 116,
+                "total_size": 117,
+                "pieces_num": 118,
+                "piece_size": 1024,
+                "pieces_have": 782,
+                "created_by": "bob",
+                "is_private": false,
+                "private": Value::Null,
+                "addition_date": 324,
+                "last_seen": 777,
+                "completion_date": 100,
+                "creation_date": 200,
+                "save_path": "/downloads",
+                "download_path": "/path/to/downloads/",
+                "comment": "this is a test comment",
+                "has_metadata": false,
+                "progress": 30.1,
+            });
+
+            #[cfg(feature = "qBittorrent-5_3")]
+            {
+                json["availability"] = Value::Number(Number::from(0.0));
+            }
+
+            let res: Result<TorrentProperties, serde_json::Error> =
+                serde_json::from_value(json.clone());
+
+            assert!(res.is_ok());
+
+            let torrent = res.unwrap();
+            assert_eq!(torrent.hash, "ffffffffffffffffffffffffffffffffffffffff");
+            assert_eq!(torrent.name, "test.torrent");
+
+            assert_eq!(torrent.private, None);
+
+            json["private"] = Value::Bool(true);
+            let res: Result<TorrentProperties, serde_json::Error> = serde_json::from_value(json);
+            assert!(res.is_ok());
+            let torrent = res.unwrap();
+            assert_eq!(torrent.private, Some(true));
         }
     }
 }
