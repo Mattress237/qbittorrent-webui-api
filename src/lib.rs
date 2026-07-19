@@ -1,3 +1,5 @@
+#![recursion_limit = "256"] // For serde_json
+
 //! # Qbittorrent Web API wrapper
 //!
 //! This module provides a wrapper around the Qbit Web API, enabling

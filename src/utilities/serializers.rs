@@ -32,6 +32,16 @@ where
     serializer.serialize_str(&value.join(";"))
 }
 
+pub fn vec_to_string_comma_separated<S>(
+    value: &Vec<String>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_str(&value.join(","))
+}
+
 pub fn option_vec_to_string_pipe_separated<S>(
     value: &Option<Vec<String>>,
     serializer: S,
@@ -122,13 +132,51 @@ mod tests {
         }
 
         #[test]
-        fn from_vec() {
+        fn from_multiple() {
             let test_data = TestDataVecString {
                 value: vec!["String".to_string(), "String2".to_string()],
             };
 
             let result = serde_json::to_string(&test_data).unwrap();
             assert_eq!(result, "{\"value\":\"String;String2\"}");
+        }
+    }
+
+    mod vec_to_string_comma_separated_tests {
+        use super::*;
+
+        #[derive(Debug, PartialEq, Serialize)]
+        struct TestDataVecString {
+            #[serde(serialize_with = "vec_to_string_comma_separated")]
+            value: Vec<String>,
+        }
+
+        #[test]
+        fn from_empty() {
+            let test_data = TestDataVecString { value: vec![] };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"\"}");
+        }
+
+        #[test]
+        fn from_single() {
+            let test_data = TestDataVecString {
+                value: vec!["String".to_string()],
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String\"}");
+        }
+
+        #[test]
+        fn from_multiple() {
+            let test_data = TestDataVecString {
+                value: vec!["String".to_string(), "String2".to_string()],
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String,String2\"}");
         }
     }
 
@@ -171,7 +219,7 @@ mod tests {
         }
 
         #[test]
-        fn from_vec() {
+        fn from_multiple() {
             let test_data = TestDataVecString {
                 value: Some(vec!["String".to_string(), "String2".to_string()]),
             };
