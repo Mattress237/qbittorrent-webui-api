@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use bytes::Bytes;
 
-use crate::{
-    Error,
-    models::{TorrentCreator, TorrentCreatorTask, TorrentCreatorTaskStatus},
-};
+use crate::{Error, models::TorrentCreatorTask, parameters::TorrentCreator};
 
 impl super::Api {
     /// Create a task to eventually make a new torrent.
@@ -14,7 +11,7 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
-    /// use qbit::models::TorrentCreator;
+    /// use qbit::parameters::TorrentCreator;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -27,10 +24,10 @@ impl super::Api {
     ///     let result = client.create_task(&torrent).await;
     ///
     ///     assert!(result.is_ok());
-    ///     println!("{}", result.ok().unwrap().task_id);
+    ///     println!("{}", result.ok().unwrap());
     /// }
     /// ```
-    pub async fn create_task(&self, params: &TorrentCreator) -> Result<TorrentCreatorTask, Error> {
+    pub async fn create_task(&self, params: &TorrentCreator) -> Result<String, Error> {
         let mut form = HashMap::new();
         form.insert("sourcePath", params.source_path.clone());
 
@@ -69,6 +66,13 @@ impl super::Api {
             form.insert("comment", comment.clone());
         }
 
+        #[derive(Debug, Clone, serde::Deserialize)]
+        // Response data from the API.
+        struct Data {
+            #[serde(rename = "taskID")]
+            task_id: String,
+        }
+
         Ok(self
             ._post("torrentcreator/addTask")
             .await?
@@ -76,8 +80,9 @@ impl super::Api {
             .send()
             .await?
             .error_for_status()?
-            .json::<TorrentCreatorTask>()
-            .await?)
+            .json::<Data>()
+            .await?
+            .task_id)
     }
 
     /// List all tasks that have been created before.
@@ -101,14 +106,14 @@ impl super::Api {
     ///     }
     /// }
     /// ```
-    pub async fn list_tasks(&self) -> Result<Vec<TorrentCreatorTaskStatus>, Error> {
+    pub async fn list_tasks(&self) -> Result<Vec<TorrentCreatorTask>, Error> {
         Ok(self
             ._get("torrentcreator/status")
             .await?
             .send()
             .await?
             .error_for_status()?
-            .json::<Vec<TorrentCreatorTaskStatus>>()
+            .json::<Vec<TorrentCreatorTask>>()
             .await?)
     }
 
@@ -134,12 +139,9 @@ impl super::Api {
     ///     fs::write("task.torrent", raw_task);
     /// }
     /// ```
-    pub async fn get_task_file(
-        &self,
-        task_id: impl Into<TorrentCreatorTask>,
-    ) -> Result<Bytes, Error> {
+    pub async fn get_task_file(&self, task_id: String) -> Result<Bytes, Error> {
         let mut data = HashMap::new();
-        data.insert("taskID", task_id.into().task_id.to_owned());
+        data.insert("taskID", task_id);
 
         let data = self
             ._post("torrentcreator/torrentFile")
@@ -166,7 +168,7 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
-    /// use qbit::models::TorrentCreator;
+    /// use qbit::parameters::TorrentCreator;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -182,9 +184,9 @@ impl super::Api {
     ///     assert!(result.is_ok());
     /// }
     /// ```
-    pub async fn delete_task(&self, task_id: impl Into<TorrentCreatorTask>) -> Result<(), Error> {
+    pub async fn delete_task(&self, task_id: String) -> Result<(), Error> {
         let mut data = HashMap::new();
-        data.insert("taskID", task_id.into().task_id.to_owned());
+        data.insert("taskID", task_id);
 
         self._post("torrentcreator/deleteTask")
             .await?

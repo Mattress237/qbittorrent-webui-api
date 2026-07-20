@@ -1,3 +1,5 @@
+#![recursion_limit = "256"] // For serde_json
+
 //! # Qbittorrent Web API wrapper
 //!
 //! This module provides a wrapper around the Qbit Web API, enabling
@@ -44,6 +46,11 @@ use std::fmt::Display;
 pub use client::Api;
 pub use error::Error;
 use serde::{Deserialize, Serialize};
+
+#[cfg(all(feature = "qBittorrent-5_1", feature = "qBittorrent-5_3"))]
+compile_error!(
+    "Features 'qBittorrent-5_1' and 'qBittorrent-5_3' are not intended to be used together. Please use only one of them."
+);
 
 /// Login state
 ///

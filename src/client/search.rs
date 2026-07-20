@@ -41,7 +41,7 @@ impl super::Api {
         pattern: &str,
         plugins: &str,
         category: &str,
-    ) -> Result<u64, Error> {
+    ) -> Result<i32, Error> {
         let form = multipart::Form::new()
             .text("pattern", pattern.to_string())
             .text("plugins", plugins.to_string())
@@ -56,11 +56,17 @@ impl super::Api {
             .error_for_status()?
             .json()
             .await?;
-        let id = json["id"].as_u64().ok_or_else(|| {
+
+        #[derive(Debug, serde::Deserialize)]
+        struct SearchResponse {
+            id: i32,
+        }
+
+        let response: SearchResponse = serde_json::from_value(json).map_err(|_| {
             Error::InvalidResponse("Missing or invalid 'id' in response".to_string())
         })?;
 
-        Ok(id)
+        Ok(response.id)
     }
 
     /// Stop search
@@ -90,7 +96,7 @@ impl super::Api {
     ///     assert!(result.is_ok());
     /// }
     /// ```
-    pub async fn search_stop(&self, id: u64) -> Result<(), Error> {
+    pub async fn search_stop(&self, id: i32) -> Result<(), Error> {
         let form = multipart::Form::new().text("id", id.to_string());
 
         self._post("search/stop")
@@ -135,7 +141,7 @@ impl super::Api {
     ///     }
     /// }
     /// ```
-    pub async fn search_status(&self, id: Option<u64>) -> Result<Vec<Search>, Error> {
+    pub async fn search_status(&self, id: Option<i32>) -> Result<Vec<Search>, Error> {
         let mut query = vec![];
         if let Some(id) = id {
             query.push(("id", id));
@@ -179,7 +185,7 @@ impl super::Api {
     ///     let id = client.search_start("Ubuntu 18.04", "legittorrents", "all")
     ///         .await
     ///         .unwrap();
-    ///     let searches = client.search_results(id, 10, None)
+    ///     let searches = client.search_results(id, Some(10), None)
     ///         .await
     ///         .unwrap();
     ///
@@ -189,13 +195,15 @@ impl super::Api {
     /// ```
     pub async fn search_results(
         &self,
-        id: u64,
-        limit: u64,
-        offset: Option<i64>,
+        id: i32,
+        limit: Option<i32>,
+        offset: Option<i32>,
     ) -> Result<SearchResult, Error> {
         let mut query = vec![];
         query.push(("id", id.to_string()));
-        query.push(("limit", limit.to_string()));
+        if let Some(limit) = limit {
+            query.push(("limit", limit.to_string()));
+        }
         if let Some(offset) = offset {
             query.push(("offset", offset.to_string()));
         }
@@ -240,7 +248,7 @@ impl super::Api {
     ///     assert!(result.is_ok());
     /// }
     /// ```
-    pub async fn search_delete(&self, id: u64) -> Result<(), Error> {
+    pub async fn search_delete(&self, id: i32) -> Result<(), Error> {
         let form = multipart::Form::new().text("id", id.to_string());
 
         self._post("search/delete")

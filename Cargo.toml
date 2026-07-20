@@ -11,6 +11,11 @@ readme = "README.md"
 authors = ["Mattress <mattress@mattress.no>"]
 license = "MIT"
 
+[features]
+default = []
+qBittorrent-5_3 = []
+qBittorrent-5_1 = []
+
 [dependencies]
 reqwest = { version = "0.13.4", features = [
     "json",

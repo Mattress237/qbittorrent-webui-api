@@ -1,16 +1,21 @@
 use dotenv::dotenv;
-use qbit::{
-    Api,
-    models::{Torrent, TorrentCreatorBuilder, TorrentCreatorTask},
-    parameters::AddTorrentBuilder,
-};
 use rand::{RngExt, distr::Alphabetic};
 use std::{env, fs};
 
-pub mod application;
-pub mod authentication;
-pub mod sync;
-pub mod torrents;
+use qbit::{
+    Api,
+    models::Torrent,
+    parameters::{AddTorrentBuilder, TorrentCreatorBuilder},
+};
+
+mod application;
+mod authentication;
+mod creator;
+mod log;
+mod rss;
+mod sync;
+mod torrents;
+mod transfer;
 
 pub const DEBIAN_HASH: &str = "6f4370df4304609a8793ce2b59178dcc8febf5e2";
 pub const DEBIAN_TRACKER: &str = "magnet:?xt=urn:btih:6f4370df4304609a8793ce2b59178dcc8febf5e2&dn=debian-12.11.0-amd64-netinst.iso&xl=702545920&tr=http%3A%2F%2Fbttracker.debian.org%3A6969%2Fannounce&ws=https://cdimage.debian.org/cdimage/archive/12.11.0/amd64/iso-cd/debian-12.11.0-amd64-netinst.iso&ws=https://cdimage.debian.org/cdimage/release/12.11.0/amd64/iso-cd/debian-12.11.0-amd64-netinst.iso";
@@ -135,10 +140,30 @@ pub fn create_test_data() -> String {
     env::var("SERVER_TEMP_DIR").unwrap()
 }
 
-pub async fn create_dummy_torrent(
-    client: &Api,
-    name: String,
-) -> Result<TorrentCreatorTask, qbit::Error> {
+pub fn create_test_data_dummy_folder(name: String) -> (String, String) {
+    let server_folder = format!("{}/_data/{name}", create_test_data());
+    let folder = format!("{}/_data/{name}", env::var("TEMP_DIR").unwrap());
+    fs::create_dir_all(&folder).unwrap_or_default();
+    println!(
+        "{} : {}",
+        format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap()),
+        format!("{folder}/dummy.txt")
+    );
+    println!(
+        "{:?} : {:?}",
+        fs::exists(format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap())),
+        fs::exists(format!("{folder}/dummy.txt"))
+    );
+    fs::copy(
+        format!("{}/{DUMMY_FILE}", env::var("TEMP_DIR").unwrap()),
+        format!("{folder}/dummy.txt"),
+    )
+    .unwrap();
+
+    (server_folder, folder)
+}
+
+pub async fn create_dummy_torrent(client: &Api, name: String) -> Result<String, qbit::Error> {
     let server_folder = create_test_data();
     let folder = format!("{}/_data/{name}", env::var("TEMP_DIR").unwrap());
     fs::create_dir_all(&folder).unwrap_or_default();
