@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use bytes::Bytes;
 
-use crate::{Error, models::TorrentCreatorTask, parameters::TorrentCreator};
+use crate::{Error, models::TorrentCreatorTask, parameters::CreateTorrent};
 
 impl super::Api {
     /// Create a task to eventually make a new torrent.
@@ -11,7 +11,7 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
-    /// use qbit::parameters::TorrentCreator;
+    /// use qbit::parameters::CreateTorrent;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -20,23 +20,27 @@ impl super::Api {
     ///         .await
     ///         .unwrap();
     ///
-    ///     let torrent = TorrentCreator::default();
-    ///     let result = client.create_task(&torrent).await;
+    ///     let torrent = CreateTorrent::default();
+    ///     let result = client.create_torrent(&torrent).await;
     ///
     ///     assert!(result.is_ok());
     ///     println!("{}", result.ok().unwrap());
     /// }
     /// ```
-    pub async fn create_task(&self, params: &TorrentCreator) -> Result<String, Error> {
+    pub async fn create_torrent(&self, params: &CreateTorrent) -> Result<String, Error> {
         let mut form = HashMap::new();
+
         form.insert("sourcePath", params.source_path.clone());
 
-        // apparently all of these are optional...
+        #[cfg(feature = "qBittorrent-5_3")]
+        if some(ignore_dotfiles) = &params.ignore_dotfiles {
+            form.insert("ignoreDotfiles", ignore_dotfiles.to_string());
+        }
+        if let Some(private) = params.private {
+            form.insert("private", private.to_string());
+        }
         if let Some(format) = &params.format {
             form.insert("format", format.to_string());
-        }
-        if let Some(piece) = &params.piece_size {
-            form.insert("pieceSize", piece.0.to_string());
         }
         if let Some(optimize) = &params.optimize_alignment {
             form.insert("optimizeAlignment", optimize.to_string());
@@ -44,14 +48,17 @@ impl super::Api {
         if let Some(padded_limit) = &params.padded_file_size_limit {
             form.insert("paddedFileSizeLimit", padded_limit.to_string());
         }
-        if let Some(private) = params.private {
-            form.insert("private", private.to_string());
-        }
-        if let Some(seeding) = params.start_seeding {
-            form.insert("startSeeding", seeding.to_string());
+        if let Some(piece) = &params.piece_size {
+            form.insert("pieceSize", piece.0.to_string());
         }
         if let Some(file_path) = &params.torrent_file_path {
             form.insert("torrentFilePath", file_path.clone());
+        }
+        if let Some(comment) = &params.comment {
+            form.insert("comment", comment.clone());
+        }
+        if let Some(source) = &params.source {
+            form.insert("source", source.clone());
         }
         if let Some(trackers) = &params.trackers {
             form.insert("trackers", trackers.join("|"));
@@ -59,11 +66,8 @@ impl super::Api {
         if let Some(seeds) = &params.url_seeds {
             form.insert("urlSeeds", seeds.join("|"));
         }
-        if let Some(source) = &params.source {
-            form.insert("source", source.clone());
-        }
-        if let Some(comment) = &params.comment {
-            form.insert("comment", comment.clone());
+        if let Some(seeding) = params.start_seeding {
+            form.insert("startSeeding", seeding.to_string());
         }
 
         #[derive(Debug, Clone, serde::Deserialize)]
@@ -168,7 +172,7 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
-    /// use qbit::parameters::TorrentCreator;
+    /// use qbit::parameters::CreateTorrent;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -177,8 +181,8 @@ impl super::Api {
     ///         .await
     ///         .unwrap();
     ///
-    ///     let torrent = TorrentCreator::default();
-    ///     let torrent_task = client.create_task(&torrent).await.unwrap();
+    ///     let torrent = CreateTorrent::default();
+    ///     let torrent_task = client.create_torrent(&torrent).await.unwrap();
     ///     let result = client.delete_task(torrent_task).await;
     ///
     ///     assert!(result.is_ok());

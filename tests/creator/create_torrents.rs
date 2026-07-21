@@ -1,6 +1,6 @@
 use qbit::{
     models::{TorrentFormat, TorrentPieceSize},
-    parameters::TorrentCreatorBuilder,
+    parameters::CreateTorrentBuilder,
 };
 
 use crate::{create_random_name, create_test_data_dummy_folder, login_default_client};
@@ -13,14 +13,14 @@ pub async fn can_create_torrent() {
     let client = login_default_client().await;
     let torrent_name = create_random_name(&format!("{}-1_", TORRENT_PREFIX));
     let (path, _) = create_test_data_dummy_folder(torrent_name.clone());
-    let parameters = TorrentCreatorBuilder::default()
+    let parameters = CreateTorrentBuilder::default()
         .source_path(path)
         .build()
         .unwrap();
 
     println!("{:?}", parameters);
 
-    let result = client.create_task(&parameters).await;
+    let result = client.create_torrent(&parameters).await;
     assert!(result.is_ok());
 
     cleanup_torrent_and_task(&client, &torrent_name, result.unwrap()).await
@@ -32,7 +32,7 @@ pub async fn can_create_torrent_with_parameters() {
     let client = login_default_client().await;
     let torrent_name = create_random_name(&format!("{}-2_", TORRENT_PREFIX));
     let (path, _) = create_test_data_dummy_folder(torrent_name.clone());
-    let parameters = TorrentCreatorBuilder::default()
+    let parameters = CreateTorrentBuilder::default()
         .source_path(path)
         .comment("test")
         .optimize_alignment(true)
@@ -44,7 +44,7 @@ pub async fn can_create_torrent_with_parameters() {
         .build()
         .unwrap();
 
-    let result = client.create_task(&parameters).await;
+    let result = client.create_torrent(&parameters).await;
     assert!(result.is_ok());
 
     cleanup_torrent_and_task(&client, &torrent_name, result.unwrap()).await

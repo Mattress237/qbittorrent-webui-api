@@ -5,7 +5,7 @@ use std::{env, fs};
 use qbit::{
     Api,
     models::Torrent,
-    parameters::{AddTorrentBuilder, TorrentCreatorBuilder},
+    parameters::{AddTorrentBuilder, CreateTorrentBuilder},
 };
 
 mod application;
@@ -183,7 +183,7 @@ pub async fn create_dummy_torrent(client: &Api, name: String) -> Result<String, 
     )
     .unwrap();
 
-    let torrent = TorrentCreatorBuilder::default()
+    let torrent = CreateTorrentBuilder::default()
         .source_path(format!("{server_folder}/_data/{name}"))
         .start_seeding(true)
         .private(true)
@@ -193,5 +193,5 @@ pub async fn create_dummy_torrent(client: &Api, name: String) -> Result<String, 
         .build()
         .expect("Failed to build torrent creator");
 
-    client.create_task(&torrent).await
+    client.create_torrent(&torrent).await
 }
