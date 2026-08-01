@@ -537,6 +537,7 @@ pub struct Preferences {
     pub web_ui_session_timeout: i32,
     // TODO: verison, text, feature flag, etc...
     #[cfg(feature = "qBittorrent-5_3")]
+    // https://github.com/qbittorrent/qBittorrent/pull/24720
     pub web_ui_sessions_count_limit: i32,
 
     // ========== API Key ==========
@@ -802,6 +803,7 @@ pub struct Preferences {
     pub enable_multi_connections_from_same_ip: bool,
     // TODO: verison, text, feature flag, etc...
     #[cfg(feature = "qBittorrent-5_3")]
+    // https://github.com/qbittorrent/qBittorrent/pull/24684
     pub enable_multi_connections_from_same_peer_id: bool,
     /// Makes the certificate of trackers and web seeds validated against the system certificate.
     ///
