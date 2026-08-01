@@ -40,6 +40,7 @@ pub struct Cookie {
 }
 
 /// Preferences response data object.
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/webui/api/appcontroller.cpp
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq, Builder)]
 pub struct Preferences {
     // ======================================
@@ -140,10 +141,37 @@ pub struct Preferences {
     pub temp_path: String,
     /// Use the path specified by the category even if the torrent is in manual mode.
     pub use_category_paths_in_manual_mode: bool,
+
+    // ========== .torrent files backup management ==========
     /// Path to copy `.torrent` files to.
+    // [pr 24641](https://github.com/qbittorrent/qBittorrent/pull/24641)
+    #[cfg(not(feature = "qBittorrent-5_3"))]
     pub export_dir: String,
     /// Path to copy `.torrent` files of completed downloads to.
-    pub export_dir_fin: String,
+    // [pr 24641](https://github.com/qbittorrent/qBittorrent/pull/24641)
+    #[cfg(not(feature = "qBittorrent-5_3"))]
+    #[serde(rename = "export_dir_fin")]
+    pub export_dir_finished: String,
+    /// Enable backup of `.torrent` files.
+    // [pr 24641](https://github.com/qbittorrent/qBittorrent/pull/24641)
+    #[cfg(feature = "qBittorrent-5_3")]
+    pub torrent_files_backup_enabled: bool,
+    /// Path to backup `.torrent` files to.
+    // [pr 24641](https://github.com/qbittorrent/qBittorrent/pull/24641)
+    #[cfg(feature = "qBittorrent-5_3")]
+    pub torrent_files_backup_dir: String,
+    /// Enable backup of `.torrent` files of completed downloads.
+    // [pr 24641](https://github.com/qbittorrent/qBittorrent/pull/24641)
+    #[cfg(feature = "qBittorrent-5_3")]
+    pub torrent_files_finished_backup_dir_enabled: bool,
+    /// Path to backup `.torrent` files of completed downloads to.
+    // [pr 24641](https://github.com/qbittorrent/qBittorrent/pull/24641)
+    #[cfg(feature = "qBittorrent-5_3")]
+    pub torrent_files_finished_backup_dir: String,
+    /// Remove backup when removing the torrent.
+    // [pr 24641](https://github.com/qbittorrent/qBittorrent/pull/24641)
+    #[cfg(feature = "qBittorrent-5_3")]
+    pub remove_torrent_file_backup: bool,
 
     /// Directories to scan for `.torrent` files. `ScanDir` enum is used to
     /// overwrite the default save path of adding torrents.
@@ -151,6 +179,7 @@ pub struct Preferences {
     /// NOTE: This is marked as deprecated in the qBittorrent source code. It
     /// might be removed or replaced in future versions.
     pub scan_dirs: HashMap<String, ScanDir>,
+
     // ========== Excluded file names ==========
     /// Is the filename blacklist enabled?
     pub excluded_file_names_enabled: bool,
@@ -506,6 +535,9 @@ pub struct Preferences {
     pub web_ui_ban_duration: i32,
     /// Seconds until WebUI is automatically signed off
     pub web_ui_session_timeout: i32,
+    // TODO: verison, text, feature flag, etc...
+    #[cfg(feature = "qBittorrent-5_3")]
+    pub web_ui_sessions_count_limit: i32,
 
     // ========== API Key ==========
     /// API key for WebUI authentication
@@ -768,6 +800,9 @@ pub struct Preferences {
     ///
     /// See https://www.libtorrent.org/reference-Settings.html#allow_multiple_connections_per_ip for more information.
     pub enable_multi_connections_from_same_ip: bool,
+    // TODO: verison, text, feature flag, etc...
+    #[cfg(feature = "qBittorrent-5_3")]
+    pub enable_multi_connections_from_same_peer_id: bool,
     /// Makes the certificate of trackers and web seeds validated against the system certificate.
     ///
     /// See https://www.libtorrent.org/reference-Settings.html#validate_https_trackers for more information.
