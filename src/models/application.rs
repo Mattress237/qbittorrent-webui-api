@@ -1159,11 +1159,51 @@ where
     }
 }
 
+pub fn option_string_to_content_layout<'de, D>(
+    deserializer: D,
+) -> Result<Option<ContentLayout>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(None),
+        JsonValue::String(s) => match s.as_str() {
+            "" => Ok(None),
+            "Original" => Ok(Some(ContentLayout::Original)),
+            "Subfolder" => Ok(Some(ContentLayout::Subfolder)),
+            "NoSubfolder" => Ok(Some(ContentLayout::NoSubfolder)),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid content layout: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for content layout: {:?}",
+            v
+        ))),
+    }
+}
+
 pub fn content_layout_to_string<S>(value: &ContentLayout, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
     serializer.serialize_str(&value.to_string())
+}
+
+pub fn option_content_layout_to_string<S>(
+    value: &Option<ContentLayout>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(layout) => serializer.serialize_str(&layout.to_string()),
+        None => serializer.serialize_str(""),
+    }
 }
 
 /// When does the torrent stop
@@ -1211,11 +1251,50 @@ where
     }
 }
 
+pub fn option_string_to_stop_condition<'de, D>(
+    deserializer: D,
+) -> Result<Option<StopCondition>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(None),
+        JsonValue::String(s) => match s.as_str() {
+            "None" => Ok(Some(StopCondition::None)),
+            "MetadataReceived" => Ok(Some(StopCondition::MetadataReceived)),
+            "FilesChecked" => Ok(Some(StopCondition::FilesChecked)),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid stop condition: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for stop condition: {:?}",
+            v
+        ))),
+    }
+}
+
 pub fn stop_condition_to_string<S>(value: &StopCondition, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
     serializer.serialize_str(&value.to_string())
+}
+
+pub fn option_stop_condition_to_string<S>(
+    value: &Option<StopCondition>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(condition) => stop_condition_to_string(condition, serializer),
+        None => serializer.serialize_none(),
+    }
 }
 
 /// What to do when removing content files upon removing a torrent.
@@ -1259,6 +1338,31 @@ where
     }
 }
 
+pub fn string_to_option_torrent_deletion<'de, D>(
+    deserializer: D,
+) -> Result<Option<TorrentDeletion>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::String(s) => match s.as_str() {
+            "Delete" => Ok(Some(TorrentDeletion::Delete)),
+            "MoveToTrash" => Ok(Some(TorrentDeletion::MoveToTrash)),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid torrent deletion: {}",
+                s
+            ))),
+        },
+        JsonValue::Null => Ok(None),
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for torrent deletion: {:?}",
+            v
+        ))),
+    }
+}
+
 pub fn torrent_deletion_to_string<S>(
     value: &TorrentDeletion,
     serializer: S,
@@ -1267,6 +1371,19 @@ where
     S: serde::Serializer,
 {
     serializer.serialize_str(&value.to_string())
+}
+
+pub fn option_torrent_deletion_to_string<S>(
+    value: &Option<TorrentDeletion>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(v) => torrent_deletion_to_string(v, serializer),
+        None => serializer.serialize_none(),
+    }
 }
 
 /// Where to save the torrent if it's appears in the specified folder.
@@ -1371,11 +1488,49 @@ where
     }
 }
 
+pub fn string_to_option_proxy_type<'de, D>(deserializer: D) -> Result<Option<ProxyType>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(None),
+        JsonValue::String(s) => match s.as_str() {
+            "None" => Ok(Some(ProxyType::None)),
+            "HTTP" => Ok(Some(ProxyType::Http)),
+            "SOCKS5" => Ok(Some(ProxyType::Socks5)),
+            "SOCKS4" => Ok(Some(ProxyType::Socks4)),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid proxy type: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for proxy type: {:?}",
+            v
+        ))),
+    }
+}
+
 pub fn proxy_type_to_string<S>(value: &ProxyType, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
 {
     serializer.serialize_str(&value.to_string())
+}
+
+pub fn option_proxy_type_to_string<S>(
+    value: &Option<ProxyType>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(v) => proxy_type_to_string(v, serializer),
+        None => serializer.serialize_none(),
+    }
 }
 
 /// The type of results to get back whilst doing `get_directory_contents`
@@ -1476,6 +1631,31 @@ where
         ))),
     }
 }
+pub fn string_to_option_fast_resume_type<'de, D>(
+    deserializer: D,
+) -> Result<Option<FastResumeType>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(None),
+        JsonValue::String(s) => match s.as_str() {
+            "" => Ok(None),
+            "Legacy" => Ok(Some(FastResumeType::Files)),
+            "SQLite" => Ok(Some(FastResumeType::SQLite)),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid fast resume type: {}",
+                s
+            ))),
+        },
+        _ => Err(serde::de::Error::custom(format!(
+            "unexpected type for fast resume type: {:?}",
+            v
+        ))),
+    }
+}
 
 pub fn fast_resume_type_to_string<S>(
     value: &FastResumeType,
@@ -1485,4 +1665,17 @@ where
     S: serde::Serializer,
 {
     serializer.serialize_str(&value.to_string())
+}
+
+pub fn option_fast_resume_type_to_string<S>(
+    value: &Option<FastResumeType>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(v) => fast_resume_type_to_string(v, serializer),
+        None => serializer.serialize_none(),
+    }
 }

@@ -55,13 +55,39 @@ where
     }
 }
 
+pub fn option_vec_to_string_newline_separated<S>(
+    value: &Option<Vec<String>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(v) => serializer.serialize_str(&v.join("\n")),
+        None => serializer.serialize_none(),
+    }
+}
+
+pub fn option_vec_to_string_semicolon_separated<S>(
+    value: &Option<Vec<String>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    match value {
+        Some(v) => serializer.serialize_str(&v.join(";")),
+        None => serializer.serialize_none(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use serde::Serialize;
 
-    mod vec_to_string_newline_separated_tests {
+    mod vec_to_string_newline_separated {
         use super::*;
 
         #[derive(Debug, PartialEq, Serialize)]
@@ -104,7 +130,7 @@ mod tests {
     }
 
     #[cfg(test)]
-    mod vec_to_string_semicolon_separated_tests {
+    mod vec_to_string_semicolon_separated {
         use super::*;
 
         #[derive(Debug, PartialEq, Serialize)]
@@ -142,7 +168,7 @@ mod tests {
         }
     }
 
-    mod vec_to_string_comma_separated_tests {
+    mod vec_to_string_comma_separated {
         use super::*;
 
         #[derive(Debug, PartialEq, Serialize)]
@@ -181,7 +207,7 @@ mod tests {
     }
 
     #[cfg(test)]
-    mod vec_to_string_pipe_separated_tests {
+    mod vec_to_string_pipe_separated {
         use super::*;
 
         #[derive(Debug, PartialEq, Serialize)]
@@ -226,6 +252,102 @@ mod tests {
 
             let result = serde_json::to_string(&test_data).unwrap();
             assert_eq!(result, "{\"value\":\"String|String2\"}");
+        }
+    }
+
+    mod option_vec_to_string_newline_separated {
+        use super::*;
+
+        #[derive(Debug, PartialEq, Serialize)]
+        struct TestDataOptionVecString {
+            #[serde(serialize_with = "option_vec_to_string_newline_separated")]
+            value: Option<Vec<String>>,
+        }
+
+        #[test]
+        fn from_none() {
+            let test_data = TestDataOptionVecString { value: None };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":null}");
+        }
+
+        #[test]
+        fn from_empty() {
+            let test_data = TestDataOptionVecString {
+                value: Some(vec![]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"\"}");
+        }
+
+        #[test]
+        fn from_single() {
+            let test_data = TestDataOptionVecString {
+                value: Some(vec!["String".to_string()]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String\"}");
+        }
+
+        #[test]
+        fn from_multiple() {
+            let test_data = TestDataOptionVecString {
+                value: Some(vec!["String".to_string(), "String2".to_string()]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String\\nString2\"}");
+        }
+    }
+
+    mod option_vec_to_string_semicolon_separated {
+        use super::*;
+
+        #[derive(Debug, PartialEq, Serialize)]
+        struct TestDataOptionVecString {
+            #[serde(serialize_with = "option_vec_to_string_semicolon_separated")]
+            value: Option<Vec<String>>,
+        }
+
+        #[test]
+        fn from_none() {
+            let test_data = TestDataOptionVecString { value: None };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":null}");
+        }
+
+        #[test]
+        fn from_empty() {
+            let test_data = TestDataOptionVecString {
+                value: Some(vec![]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"\"}");
+        }
+
+        #[test]
+        fn from_single() {
+            let test_data = TestDataOptionVecString {
+                value: Some(vec!["String".to_string()]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String\"}");
+        }
+
+        #[test]
+        fn from_multiple() {
+            let test_data = TestDataOptionVecString {
+                value: Some(vec!["String".to_string(), "String2".to_string()]),
+            };
+
+            let result = serde_json::to_string(&test_data).unwrap();
+            assert_eq!(result, "{\"value\":\"String;String2\"}");
         }
     }
 }
