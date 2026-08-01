@@ -7,10 +7,7 @@
 
 use std::fmt::Debug;
 
-use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
-
-use crate::models::ContentLayout;
 
 mod application;
 mod creator;
@@ -234,114 +231,4 @@ impl TorrentState {
     pub fn is_errored(&self) -> bool {
         *self == Self::Error || *self == Self::MissingFiles
     }
-}
-
-/// Add torrent parameter object
-#[derive(Debug, Default, Builder, Clone, Deserialize, Serialize, PartialEq)]
-pub struct AddTorrent {
-    /// A list of torrent files or magnet links to be added.
-    ///
-    /// This field is required and must contain at least one item.
-    #[builder(setter(into))]
-    pub torrents: AddTorrentType,
-    /// Download folder
-    #[builder(setter(into, strip_option), default)]
-    pub savepath: Option<String>,
-    /// Category for the torrent
-    #[builder(setter(into, strip_option), default)]
-    pub category: Option<String>,
-    /// Tags for the torrent.
-    #[builder(setter(into, strip_option), default)]
-    pub tags: Option<Vec<String>>,
-    /// Skip hash checking.
-    #[builder(default)]
-    pub skip_checking: bool,
-    /// Add torrents in the paused state.
-    #[builder(default)]
-    pub paused: bool,
-    /// The torrent subfolder layout.
-    #[builder(setter(into), default)]
-    pub content_layout: ContentLayout,
-    /// Rename torrent
-    #[builder(setter(into, strip_option), default)]
-    pub rename: Option<String>,
-    /// Set torrent upload speed limit. Unit in bytes/second
-    #[builder(setter(into, strip_option), default)]
-    pub up_limit: Option<i64>,
-    /// Set torrent download speed limit. Unit in bytes/second
-    #[builder(setter(into, strip_option), default)]
-    pub dl_limit: Option<i64>,
-    /// Set torrent share ratio limit
-    #[builder(setter(into, strip_option), default)]
-    pub ratio_limit: Option<f32>,
-    /// Set torrent seeding time limit. Unit in minutes
-    #[builder(setter(into, strip_option), default)]
-    pub seeding_time_limit: Option<i64>,
-    /// Whether Automatic Torrent Management should be used
-    #[builder(default)]
-    pub auto_tmm: bool,
-    /// Enable sequential download.
-    #[builder(default)]
-    pub sequential_download: bool,
-    /// Prioritize download first last piece.
-    #[builder(default)]
-    pub first_last_piece_prio: bool,
-}
-
-/// The type of torrent to add. Either `magnet` links or `.torrent` files.
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub enum AddTorrentType {
-    /// Magnet links to add
-    Links(Vec<String>),
-    /// Files to add
-    Files(Vec<TorrentFile>),
-}
-
-impl AddTorrentType {
-    /// Checks to see if we have either urls/files. (Can't add a torrent without these)
-    pub fn is_empty(&self) -> bool {
-        match self {
-            AddTorrentType::Links(items) => items.is_empty(),
-            AddTorrentType::Files(items) => items.is_empty(),
-        }
-    }
-}
-
-impl From<Vec<String>> for AddTorrentType {
-    fn from(value: Vec<String>) -> Self {
-        Self::Links(value)
-    }
-}
-
-impl From<String> for AddTorrentType {
-    fn from(value: String) -> Self {
-        Self::Links(vec![value])
-    }
-}
-
-impl From<Vec<TorrentFile>> for AddTorrentType {
-    fn from(value: Vec<TorrentFile>) -> Self {
-        Self::Files(value)
-    }
-}
-
-impl From<TorrentFile> for AddTorrentType {
-    fn from(value: TorrentFile) -> Self {
-        Self::Files(vec![value])
-    }
-}
-
-impl Default for AddTorrentType {
-    fn default() -> Self {
-        AddTorrentType::Links(vec![])
-    }
-}
-
-/// Information about the torrent file
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
-pub struct TorrentFile {
-    /// Name of file
-    pub filename: String,
-    /// Data stored in the file. (just fs::read would work)
-    pub data: Vec<u8>,
 }

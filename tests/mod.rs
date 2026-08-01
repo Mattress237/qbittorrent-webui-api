@@ -62,7 +62,7 @@ pub async fn login_default_client() -> Api {
 pub async fn add_debian_torrent(client: &Api) {
     let param = AddTorrentBuilder::default()
         .torrents(vec![DEBIAN_TRACKER.to_string()])
-        .paused(true)
+        .stopped(true)
         .build()
         .expect("Failed to build AddTorrent");
 

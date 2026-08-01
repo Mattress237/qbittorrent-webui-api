@@ -5,6 +5,11 @@ use std::fmt::Display;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
+use crate::models::{ContentLayout, ShareLimitAction, StopCondition};
+
+#[cfg(feature = "qBittorrent-5_3")]
+use crate::models::ShareLimitMode;
+
 /// Torrent List/info parameter object
 #[derive(Debug, Default, Builder, Clone, Deserialize, Serialize, PartialEq)]
 pub struct TorrentListParams {
@@ -257,5 +262,139 @@ impl Display for TorrentSort {
                 Self::Upspeed => "upspeed",
             }
         )
+    }
+}
+
+/// Add torrent parameter object
+// https://github.com/qbittorrent/qBittorrent/blame/master/src/webui/api/torrentscontroller.cpp
+#[derive(Debug, Default, Builder, Clone, Deserialize, Serialize, PartialEq)]
+pub struct AddTorrent {
+    /// A list of torrent files or magnet links to be added.
+    ///
+    /// This field is required and must contain at least one item.
+    #[builder(setter(into))]
+    pub torrents: AddTorrentType,
+
+    #[builder(setter(into, strip_option), default = None)]
+    #[cfg(not(feature = "qBittorrent-5_3"))]
+    // https://github.com/qbittorrent/qBittorrent/pull/24724
+    pub skip_checking: Option<bool>,
+    #[cfg(feature = "qBittorrent-5_3")]
+    // https://github.com/qbittorrent/qBittorrent/pull/24724
+    #[builder(setter(into, strip_option), default = None)]
+    pub seed_mode: Option<bool>,
+    /// Enable sequential download.
+    #[builder(setter(into, strip_option), default = None)]
+    pub sequential_download: Option<bool>,
+    /// Prioritize download first last piece.
+    #[builder(setter(into, strip_option), default = None)]
+    pub first_last_piece_prio: Option<bool>,
+    #[builder(setter(into, strip_option), default = None)]
+    pub forced: Option<bool>,
+    #[builder(setter(into, strip_option), default = None)]
+    pub add_to_queue_top: Option<bool>,
+    /// Add torrents in the stopped state.
+    #[builder(setter(into, strip_option), default = None)]
+    pub stopped: Option<bool>,
+    /// Download folder
+    #[builder(setter(into, strip_option), default = None)]
+    pub save_path: Option<String>,
+    #[builder(setter(into, strip_option), default = None)]
+    pub download_path: Option<String>,
+    #[builder(setter(into, strip_option), default = None)]
+    pub use_download_path: Option<bool>,
+    /// Category for the torrent
+    #[builder(setter(into, strip_option), default = None)]
+    pub category: Option<String>,
+    /// Tags for the torrent.
+    #[builder(setter(into, strip_option), default = None)]
+    pub tags: Option<Vec<String>>,
+    /// Rename torrent
+    #[builder(setter(into, strip_option), default = None)]
+    pub rename: Option<String>,
+    /// Set torrent upload speed limit. Unit in bytes/second
+    #[builder(setter(into, strip_option), default = None)]
+    pub upload_limit: Option<i32>,
+    /// Set torrent download speed limit. Unit in bytes/second
+    #[builder(setter(into, strip_option), default = None)]
+    pub download_limit: Option<i32>,
+    /// Set torrent share ratio limit
+    #[builder(setter(into, strip_option), default = None)]
+    pub ratio_limit: Option<f64>,
+    /// Set torrent seeding time limit. Unit in minutes
+    #[builder(setter(into, strip_option), default = None)]
+    pub seeding_time_limit: Option<i32>,
+    #[builder(setter(into, strip_option), default = None)]
+    pub inactive_seeding_time_limit: Option<i32>,
+    #[cfg(feature = "qBittorrent-5_3")]
+    #[builder(setter(into, strip_option), default = None)]
+    pub share_limit_mode: Option<ShareLimitMode>,
+    #[builder(setter(into, strip_option), default = None)]
+    pub share_limit_action: Option<ShareLimitAction>,
+    /// Whether Automatic Torrent Management should be used
+    #[builder(setter(into, strip_option), default = None)]
+    pub auto_tmm: Option<bool>,
+    #[builder(setter(into, strip_option), default = None)]
+    pub stop_condition: Option<StopCondition>,
+    /// The torrent subfolder layout.
+    #[builder(setter(into), default)]
+    pub content_layout: ContentLayout,
+}
+
+/// The type of torrent to add. Either `magnet` links or `.torrent` files.
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub enum AddTorrentType {
+    /// Magnet links to add
+    Links(Vec<String>),
+    /// Files to add
+    Files(Vec<TorrentFile>),
+}
+
+impl AddTorrentType {
+    /// Checks to see if we have either urls/files. (Can't add a torrent without these)
+    pub fn is_empty(&self) -> bool {
+        match self {
+            AddTorrentType::Links(items) => items.is_empty(),
+            AddTorrentType::Files(items) => items.is_empty(),
+        }
+    }
+}
+
+impl From<Vec<String>> for AddTorrentType {
+    fn from(value: Vec<String>) -> Self {
+        Self::Links(value)
+    }
+}
+
+impl From<String> for AddTorrentType {
+    fn from(value: String) -> Self {
+        Self::Links(vec![value])
+    }
+}
+
+/// Information about the torrent file
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+pub struct TorrentFile {
+    /// Name of file
+    pub filename: String,
+    /// Data stored in the file. (just fs::read would work)
+    pub data: Vec<u8>,
+}
+
+impl From<Vec<TorrentFile>> for AddTorrentType {
+    fn from(value: Vec<TorrentFile>) -> Self {
+        Self::Files(value)
+    }
+}
+
+impl From<TorrentFile> for AddTorrentType {
+    fn from(value: TorrentFile) -> Self {
+        Self::Files(vec![value])
+    }
+}
+
+impl Default for AddTorrentType {
+    fn default() -> Self {
+        AddTorrentType::Links(vec![])
     }
 }
