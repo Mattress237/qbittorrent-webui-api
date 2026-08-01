@@ -1,4 +1,4 @@
-use qbit::parameters::TorrentState;
+use qbit::models::TorrentState;
 
 use crate::{add_debian_torrent, get_debian_torrent, login_default_client};
 
