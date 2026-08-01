@@ -479,7 +479,9 @@ pub struct Preferences {
     /// Enable automatic adding of trackers to new torrents
     pub add_trackers_enabled: bool,
     /// List of trackers to add to new torrent. Separated by a new line (`\n`)
-    pub add_trackers: String,
+    #[serde(deserialize_with = "deserializers::string_to_vec_newline_separated")]
+    #[serde(serialize_with = "serializers::vec_to_string_newline_separated")]
+    pub add_trackers: Vec<String>,
     /// Enables automatic adding of trackers (from URL) to a new torrent
     pub add_trackers_from_url_enabled: bool,
     /// The URL to get the trackers from
