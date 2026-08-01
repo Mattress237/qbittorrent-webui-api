@@ -228,6 +228,10 @@ pub struct Torrent {
     pub reannounce: i64,
     /// Torrent comment metadata form the `.torrent` file
     pub comment: String,
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    // https://github.com/qbittorrent/qBittorrent/pull/22750
+    pub files: Option<Vec<TorrentContent>>,
+    pub trackers: Option<Vec<TrackerInfo>>,
 }
 
 /// Represents a map of torrents, where the key of the `HashMap` is the
@@ -380,6 +384,9 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
             availability: f64,
             reannounce: i64,
             comment: String,
+
+            files: Option<Vec<TorrentContent>>,
+            trackers: Option<Vec<TrackerInfo>>,
         }
 
         while let Some(key) = access.next_key::<String>()? {
@@ -477,6 +484,10 @@ impl<'de> Visitor<'de> for TorrentMapVisitor {
                 availability: temp_torrent.availability,
                 reannounce: temp_torrent.reannounce,
                 comment: temp_torrent.comment,
+
+                #[cfg(not(feature = "qBittorrent-5_1"))]
+                files: temp_torrent.files,
+                trackers: temp_torrent.trackers,
             };
             map.insert(key, torrent);
         }
@@ -739,29 +750,47 @@ pub struct WebSeed {
     pub url: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
+pub struct TrackerInfo {
+    pub url: String,
+    pub tier: i32,
+    pub status: TrackerStatus,
+    #[serde(rename = "msg")]
+    pub message: String,
+    #[serde(rename = "num_peers")]
+    pub peers_count: i32,
+    #[serde(rename = "num_seeds")]
+    pub seeds_count: i32,
+    #[serde(rename = "num_leeches")]
+    pub leeches_count: i32,
+    #[serde(rename = "num_downloaded")]
+    pub downloaded_count: i32,
+}
+
 /// Torrent file/content.
 ///
 /// This struct provides detailed information about individual files within a torrent,
 /// including their index, name, size, progress, priority, and more.
 ///
+// https://github.com/qbittorrent/qBittorrent/blob/master/src/webui/api/torrentscontroller.cpp
 #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
 pub struct TorrentContent {
     /// File index
-    pub index: i64,
-    /// File name (including relative path)
-    pub name: String,
-    /// File size (bytes)
-    pub size: i64,
+    pub index: i32,
     /// File progress (percentage/100)
     pub progress: f64,
     /// File priority.
     pub priority: FilePriority,
-    /// Is file seeding / completed.
-    pub is_seed: Option<bool>,
-    /// The first number is the starting piece index and the second number is the ending piece index (inclusive)
-    pub piece_range: Vec<i64>,
+    /// File size (bytes)
+    pub size: i64,
     /// Percentage of file pieces currently available (percentage/100)
     pub availability: f64,
+    /// File name (including relative path)
+    pub name: String,
+    /// The first number is the starting piece index and the second number is the ending piece index (inclusive)
+    pub piece_range: Vec<i32>,
+    /// Is file seeding / completed.
+    pub is_seed: Option<bool>,
 }
 
 /// File priority enum
