@@ -47,9 +47,6 @@ impl super::Api {
 
         let params = params.unwrap_or_default();
 
-        if let Some(reverse) = params.reverse {
-            query.push(("reverse", reverse.to_string()));
-        }
         if let Some(filter) = params.filter {
             query.push(("filter", filter.to_string()));
         }
@@ -62,6 +59,9 @@ impl super::Api {
         if let Some(sort) = params.sort {
             query.push(("sort", sort.to_string()));
         }
+        if let Some(reverse) = params.reverse {
+            query.push(("reverse", reverse.to_string()));
+        }
         if let Some(limit) = params.limit {
             query.push(("limit", limit.to_string()));
         }
@@ -70,6 +70,16 @@ impl super::Api {
         }
         if let Some(hashes) = params.hashes {
             query.push(("hashes", hashes.join("|")));
+        }
+        if let Some(is_private) = params.is_private {
+            query.push(("private", is_private.to_string()));
+        }
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        if let Some(include_files) = params.include_files {
+            query.push(("includeFiles", include_files.to_string()));
+        }
+        if let Some(include_trackers) = params.include_trackers {
+            query.push(("includeTrackers", include_trackers.to_string()));
         }
 
         let torrents = self
