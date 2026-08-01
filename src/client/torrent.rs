@@ -47,9 +47,6 @@ impl super::Api {
 
         let params = params.unwrap_or_default();
 
-        if let Some(reverse) = params.reverse {
-            query.push(("reverse", reverse.to_string()));
-        }
         if let Some(filter) = params.filter {
             query.push(("filter", filter.to_string()));
         }
@@ -62,6 +59,9 @@ impl super::Api {
         if let Some(sort) = params.sort {
             query.push(("sort", sort.to_string()));
         }
+        if let Some(reverse) = params.reverse {
+            query.push(("reverse", reverse.to_string()));
+        }
         if let Some(limit) = params.limit {
             query.push(("limit", limit.to_string()));
         }
@@ -70,6 +70,16 @@ impl super::Api {
         }
         if let Some(hashes) = params.hashes {
             query.push(("hashes", hashes.join("|")));
+        }
+        if let Some(is_private) = params.is_private {
+            query.push(("private", is_private.to_string()));
+        }
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        if let Some(include_files) = params.include_files {
+            query.push(("includeFiles", include_files.to_string()));
+        }
+        if let Some(include_trackers) = params.include_trackers {
+            query.push(("includeTrackers", include_trackers.to_string()));
         }
 
         let torrents = self
@@ -610,18 +620,44 @@ impl super::Api {
             }
         };
 
-        form = form
-            .text("skip_checking", params.skip_checking.to_string())
-            .text("paused", params.paused.to_string())
-            .text("autoTMM", params.auto_tmm.to_string())
-            .text("sequentialDownload", params.sequential_download.to_string())
-            .text("contentLayout", params.content_layout.to_string())
-            .text(
-                "firstLastPiecePrio",
-                params.first_last_piece_prio.to_string(),
-            );
-        if let Some(savepath) = params.savepath {
-            form = form.text("savepath", savepath);
+        #[cfg(feature = "qBittorrent-5_3")]
+        {
+            form = form
+                .text("shareLimitMode", params.share_limit_mode.to_string())
+                .text("shareLimitAction", params.share_limit_action.to_string());
+        }
+
+        #[cfg(not(feature = "qBittorrent-5_3"))]
+        if let Some(skip_checking) = params.skip_checking {
+            form = form.text("skip_checking", skip_checking.to_string());
+        }
+        #[cfg(feature = "qBittorrent-5_3")]
+        if let Some(seed_mode) = params.seed_mode {
+            form = form.text("seedMode", seed_mode.to_string());
+        }
+        if let Some(sequential_download) = params.sequential_download {
+            form = form.text("sequentialDownload", sequential_download.to_string());
+        }
+        if let Some(first_last_piece_prio) = params.first_last_piece_prio {
+            form = form.text("firstLastPiecePrio", first_last_piece_prio.to_string());
+        }
+        if let Some(forced) = params.forced {
+            form = form.text("forced", forced.to_string());
+        }
+        if let Some(add_to_queue_top) = params.add_to_queue_top {
+            form = form.text("addToTopOfQueue", add_to_queue_top.to_string());
+        }
+        if let Some(stopped) = params.stopped {
+            form = form.text("stopped", stopped.to_string());
+        }
+        if let Some(save_path) = params.save_path {
+            form = form.text("savepath", save_path);
+        }
+        if let Some(download_path) = params.download_path {
+            form = form.text("downloadPath", download_path);
+        }
+        if let Some(use_download_path) = params.use_download_path {
+            form = form.text("useDownloadPath", use_download_path.to_string());
         }
         if let Some(category) = params.category {
             form = form.text("category", category);
@@ -632,11 +668,11 @@ impl super::Api {
         if let Some(rename) = params.rename {
             form = form.text("rename", rename);
         }
-        if let Some(up_limit) = params.up_limit {
-            form = form.text("upLimit", up_limit.to_string());
+        if let Some(upload_limit) = params.upload_limit {
+            form = form.text("upLimit", upload_limit.to_string());
         }
-        if let Some(dl_limit) = params.dl_limit {
-            form = form.text("dlLimit", dl_limit.to_string());
+        if let Some(download_limit) = params.download_limit {
+            form = form.text("dlLimit", download_limit.to_string());
         }
         if let Some(ratio_limit) = params.ratio_limit {
             form = form.text("ratioLimit", ratio_limit.to_string());
@@ -644,6 +680,18 @@ impl super::Api {
         if let Some(seeding_time_limit) = params.seeding_time_limit {
             form = form.text("seedingTimeLimit", seeding_time_limit.to_string());
         }
+        #[cfg(feature = "qBittorrent-5_3")]
+        if let Some(share_limit_mode) = params.share_limit_mode {
+            form = form.text("shareLimitsMode", share_limit_mode.to_string());
+        }
+        if let Some(auto_tmm) = params.auto_tmm {
+            form = form.text("autoTMM", auto_tmm.to_string());
+        }
+        if let Some(stop_condition) = params.stop_condition {
+            form = form.text("stopCondition", stop_condition.to_string());
+        }
+
+        form = form.text("contentLayout", params.content_layout.to_string());
 
         self._post("torrents/add")
             .await?

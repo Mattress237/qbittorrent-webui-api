@@ -1,4 +1,4 @@
-use qbit::{Error, models::TaskStatus, parameters::TorrentCreatorBuilder};
+use qbit::{Error, models::TaskStatus, parameters::CreateTorrentBuilder};
 
 use crate::{create_dummy_torrent, create_random_name, create_test_data, login_default_client};
 use std::{env, fs, thread, time::Duration};
@@ -168,14 +168,14 @@ async fn delete_created_task() {
 async fn make_failed_task() {
     let client = login_default_client().await;
 
-    let torrent = TorrentCreatorBuilder::default()
+    let torrent = CreateTorrentBuilder::default()
         .start_seeding(true)
         .private(true)
         .source_path("/tmp/tmp.L9uwLe8LOA")
         .build()
         .expect("Failed to build torrent creator");
 
-    let id = client.create_task(&torrent).await.unwrap();
+    let id = client.create_torrent(&torrent).await.unwrap();
     let result = client.get_task_file(id).await;
 
     assert!(result.is_err());

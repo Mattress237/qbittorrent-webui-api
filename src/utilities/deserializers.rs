@@ -152,93 +152,156 @@ where
     }
 }
 
+pub fn string_to_option_vec_newline_separated<'de, D>(
+    deserializer: D,
+) -> Result<Option<Vec<String>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(None),
+        JsonValue::String(s) => {
+            let t = s.trim();
+            if t.is_empty() {
+                Ok(None)
+            } else {
+                Ok(Some(
+                    s.split('\n')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect(),
+                ))
+            }
+        }
+        other => Err(serde::de::Error::custom(format!(
+            "unexpected type for vec deserialization: {:?}",
+            other
+        ))),
+    }
+}
+
+pub fn string_to_option_vec_semicolon_separated<'de, D>(
+    deserializer: D,
+) -> Result<Option<Vec<String>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let v = JsonValue::deserialize(deserializer)?;
+
+    match v {
+        JsonValue::Null => Ok(None),
+        JsonValue::String(s) => {
+            let t = s.trim();
+            if t.is_empty() {
+                Ok(None)
+            } else {
+                Ok(Some(
+                    s.split(';')
+                        .map(|s| s.trim().to_string())
+                        .filter(|s| !s.is_empty())
+                        .collect(),
+                ))
+            }
+        }
+        other => Err(serde::de::Error::custom(format!(
+            "unexpected type for vec deserialization: {:?}",
+            other
+        ))),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::Deserialize;
     use serde_json::{self, json};
 
-    #[derive(Deserialize, Debug, PartialEq)]
-    struct TestData<T>
-    where
-        T: for<'a> Deserialize<'a> + PartialEq + Default,
-    {
-        #[serde(deserialize_with = "from_null_to_default")]
-        value: T,
+    mod from_null_to_default {
+        use super::*;
+
+        #[derive(Deserialize, Debug, PartialEq)]
+        struct TestData<T>
+        where
+            T: for<'a> Deserialize<'a> + PartialEq + Default,
+        {
+            #[serde(deserialize_with = "from_null_to_default")]
+            value: T,
+        }
+
+        #[derive(Deserialize, Debug, PartialEq, Default)]
+        enum TestEnum {
+            One,
+            #[default]
+            Two,
+            Tree,
+        }
+
+        #[test]
+        fn test_i64_from_null() {
+            let data = json!({ "value": null });
+            let result: TestData<i64> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, 0);
+        }
+
+        #[test]
+        fn test_i64_from_number() {
+            let data = json!({ "value": 123 });
+            let result: TestData<i64> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, 123);
+        }
+
+        #[test]
+        fn test_f64_from_null() {
+            let data = json!({ "value": null });
+            let result: TestData<f64> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, 0.0);
+        }
+
+        #[test]
+        fn test_f64_from_number() {
+            let data = json!({ "value": 45.67 });
+            let result: TestData<f64> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, 45.67);
+        }
+
+        #[test]
+        fn test_bool_from_null() {
+            let data = json!({ "value": null });
+            let result: TestData<bool> = serde_json::from_value(data).unwrap();
+            assert!(!result.value);
+        }
+
+        #[test]
+        fn test_string_from_string() {
+            let data = json!({ "value": "String" });
+            let result: TestData<String> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, "String");
+        }
+
+        #[test]
+        fn test_string_from_null() {
+            let data = json!({ "value": null });
+            let result: TestData<String> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, "");
+        }
+
+        #[test]
+        fn test_enum_from_value() {
+            let data = json!({ "value": "One" });
+            let result: TestData<TestEnum> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, TestEnum::One);
+        }
+
+        #[test]
+        fn test_enum_from_null() {
+            let data = json!({ "value": null });
+            let result: TestData<TestEnum> = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, TestEnum::Two);
+        }
     }
 
-    #[derive(Deserialize, Debug, PartialEq, Default)]
-    enum TestEnum {
-        One,
-        #[default]
-        Two,
-        Tree,
-    }
-
-    #[test]
-    fn test_i64_from_null() {
-        let data = json!({ "value": null });
-        let result: TestData<i64> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, 0);
-    }
-
-    #[test]
-    fn test_i64_from_number() {
-        let data = json!({ "value": 123 });
-        let result: TestData<i64> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, 123);
-    }
-
-    #[test]
-    fn test_f64_from_null() {
-        let data = json!({ "value": null });
-        let result: TestData<f64> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, 0.0);
-    }
-
-    #[test]
-    fn test_f64_from_number() {
-        let data = json!({ "value": 45.67 });
-        let result: TestData<f64> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, 45.67);
-    }
-
-    #[test]
-    fn test_bool_from_null() {
-        let data = json!({ "value": null });
-        let result: TestData<bool> = serde_json::from_value(data).unwrap();
-        assert!(!result.value);
-    }
-
-    #[test]
-    fn test_string_from_string() {
-        let data = json!({ "value": "String" });
-        let result: TestData<String> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, "String");
-    }
-
-    #[test]
-    fn test_string_from_null() {
-        let data = json!({ "value": null });
-        let result: TestData<String> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, "");
-    }
-
-    #[test]
-    fn test_enum_from_value() {
-        let data = json!({ "value": "One" });
-        let result: TestData<TestEnum> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, TestEnum::One);
-    }
-
-    #[test]
-    fn test_enum_from_null() {
-        let data = json!({ "value": null });
-        let result: TestData<TestEnum> = serde_json::from_value(data).unwrap();
-        assert_eq!(result.value, TestEnum::Two);
-    }
-
-    mod string_to_vec_newline_separated_tests {
+    mod string_to_vec_newline_separated {
         use super::*;
 
         #[derive(Deserialize, Debug, PartialEq)]
@@ -276,7 +339,7 @@ mod tests {
         }
     }
 
-    mod string_to_vec_semicolon_separated_tests {
+    mod string_to_vec_semicolon_separated {
         use super::*;
 
         #[derive(Deserialize, Debug, PartialEq)]
@@ -314,7 +377,7 @@ mod tests {
         }
     }
 
-    mod string_to_vec_comma_separated_tests {
+    mod string_to_vec_comma_separated {
         use super::*;
 
         #[derive(Deserialize, Debug, PartialEq)]
@@ -349,6 +412,91 @@ mod tests {
             let data = json!({ "value": "String,String2," });
             let result: TestDataVecString = serde_json::from_value(data).unwrap();
             assert_eq!(result.value, vec!["String", "String2"]);
+        }
+    }
+
+    mod string_to_option_vec_newline_separated {
+        use super::*;
+
+        #[derive(Deserialize, Debug, PartialEq)]
+        struct TestDataVecString {
+            #[serde(deserialize_with = "string_to_option_vec_newline_separated")]
+            value: Option<Vec<String>>,
+        }
+
+        #[test]
+        fn from_null() {
+            let data = json!({ "value": null });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert!(result.value.is_none());
+        }
+
+        #[test]
+        fn from_string() {
+            let data = json!({ "value": "String" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(result.value, Some(vec!["String".to_string()]));
+        }
+
+        #[test]
+        fn from_string_with_newlines() {
+            let data = json!({ "value": "String\nString2" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(
+                result.value,
+                Some(vec!["String".to_string(), "String2".to_string()])
+            );
+        }
+
+        #[test]
+        fn from_string_with_trailing_newline() {
+            let data = json!({ "value": "String\nString2\n" });
+            let result: TestDataVecString = serde_json::from_value(data).unwrap();
+            assert_eq!(
+                result.value,
+                Some(vec!["String".to_string(), "String2".to_string()])
+            );
+        }
+
+        mod string_to_option_vec_semicolon_separated {
+            use super::*;
+
+            #[derive(Deserialize, Debug, PartialEq)]
+            struct TestDataVecString {
+                #[serde(deserialize_with = "string_to_option_vec_semicolon_separated")]
+                value: Option<Vec<String>>,
+            }
+
+            #[test]
+            fn from_null() {
+                let data = json!({ "value": null });
+                let result: TestDataVecString = serde_json::from_value(data).unwrap();
+                assert!(result.value.is_none());
+            }
+
+            #[test]
+            fn from_string() {
+                let data = json!({ "value": "String" });
+                let result: TestDataVecString = serde_json::from_value(data).unwrap();
+                assert_eq!(result.value, Some(vec!["String".to_string()]));
+            }
+
+            #[test]
+            fn from_string_with_semicolon() {
+                let data = json!({ "value": "String;String2" });
+                let result: TestDataVecString = serde_json::from_value(data).unwrap();
+                assert_eq!(
+                    result.value,
+                    Some(vec!["String".to_string(), "String2".to_string()])
+                );
+            }
+
+            #[test]
+            fn from_string_with_trailing_semicolon() {
+                let data = json!({ "value": "String;" });
+                let result: TestDataVecString = serde_json::from_value(data).unwrap();
+                assert_eq!(result.value, Some(vec!["String".to_string()]));
+            }
         }
     }
 }
