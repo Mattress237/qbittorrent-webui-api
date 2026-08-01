@@ -4,7 +4,8 @@ use reqwest::multipart;
 
 use crate::{
     error::Error,
-    models::{BuildInfo, Cookie, DirMode, Preferences},
+    models::{self, BuildInfo, Cookie, DirMode},
+    parameters,
 };
 
 impl super::Api {
@@ -166,14 +167,14 @@ impl super::Api {
     ///     println!("{:#?}", preferences);
     /// }
     /// ```
-    pub async fn preferences(&self) -> Result<Preferences, Error> {
+    pub async fn preferences(&self) -> Result<models::Preferences, Error> {
         let preferences = self
             ._get("app/preferences")
             .await?
             .send()
             .await?
             .error_for_status()?
-            .json::<Preferences>()
+            .json::<models::Preferences>()
             .await?;
 
         Ok(preferences)
@@ -187,7 +188,7 @@ impl super::Api {
     ///
     /// ```no_run
     /// use qbit::{Api, Credentials};
-    /// use qbit::models::Preferences;
+    /// use qbit::parameters::PreferencesBuilder;
     ///
     /// #[tokio::main]
     /// async fn main() {
@@ -196,14 +197,17 @@ impl super::Api {
     ///         .await
     ///         .unwrap();
     ///
-    ///     let preferences = Preferences::default();
+    ///     let preferences = PreferencesBuilder::default()
+    ///         .locale("en")
+    ///         .build()
+    ///         .unwrap();
     ///
     ///     let resulte = client.set_preferences(preferences).await;
     ///
     ///     assert!(resulte.is_ok());
     /// }
     /// ```
-    pub async fn set_preferences(&self, preferences: Preferences) -> Result<(), Error> {
+    pub async fn set_preferences(&self, preferences: parameters::Preferences) -> Result<(), Error> {
         let form = multipart::Form::new().text("json", serde_json::to_string(&preferences)?);
 
         self._post("app/setPreferences")

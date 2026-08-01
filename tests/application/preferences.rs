@@ -1,3 +1,5 @@
+use qbit::parameters;
+
 use crate::login_default_client;
 
 #[tokio::test]
@@ -27,10 +29,10 @@ pub async fn preferences_are_serializable() {
 pub async fn can_update_preferences() {
     let client = login_default_client().await;
 
-    let result = client.preferences().await;
-    assert!(result.is_ok());
-
-    let prefs = result.unwrap();
+    let prefs = parameters::PreferencesBuilder::default()
+        .locale("en")
+        .build()
+        .unwrap();
 
     let result = client.set_preferences(prefs).await;
     println!("{:?}", result);

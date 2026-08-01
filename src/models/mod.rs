@@ -4,6 +4,8 @@
 //! The models defined here are shared across various components and
 //! providing a consistent structure for data representation and serialization.
 //!
+//! They are used to (de) serialize data from the QbitTorrent WebUI API.
+//!
 
 use serde::{Deserialize, Serialize};
 

@@ -2,6 +2,8 @@
 //! This module provides the data structures and enums necessary for managing
 //! parameters, states, and sorting options.
 //!
+//! The types defined here are used for serializing parameters to the QbitTorrent WebUI API.
+//!
 
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
@@ -9,8 +11,10 @@ use std::fmt::{Debug, Display};
 
 use crate::models::ContentLayout;
 
+mod application;
 mod creator;
 
+pub use application::*;
 pub use creator::*;
 
 /// Torrent List/info parameter object
