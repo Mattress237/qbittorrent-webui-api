@@ -5,7 +5,8 @@ use reqwest::multipart;
 use crate::{
     error::Error,
     models::{
-        FilePriority, PiecesState, Torrent, TorrentContent, TorrentProperties, Tracker, WebSeed,
+        Category, FilePriority, PiecesState, Torrent, TorrentContent, TorrentProperties, Tracker,
+        WebSeed,
     },
     parameters::{AddTorrent, AddTorrentType, TorrentListParams},
 };
@@ -1499,16 +1500,18 @@ impl super::Api {
     /// }
     /// ```
     pub async fn categories(&self) -> Result<Vec<String>, Error> {
+        // The endpoint returns a JSON object keyed by category name, not an
+        // array, so it has to be parsed as a map first.
         let categories = self
             ._get("torrents/categories")
             .await?
             .send()
             .await?
             .error_for_status()?
-            .json::<Vec<String>>()
+            .json::<HashMap<String, Category>>()
             .await?;
 
-        Ok(categories)
+        Ok(categories.into_keys().collect())
     }
 
     /// Add new category
