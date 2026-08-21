@@ -16,7 +16,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -58,7 +58,7 @@ impl super::Api {
         username: impl Into<String>,
         password: impl Into<String>,
     ) -> Result<Self, Error> {
-        let credentials = Credentials::new(username, password);
+        let credentials = Credentials::Login(username.into(), password.into());
 
         Self::new_login(url, credentials).await
     }
@@ -81,7 +81,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let mut client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -99,32 +99,37 @@ impl super::Api {
             }
         }
 
-        if let Some(cred) = self.state.read().await.as_credentials() {
-            if cred.is_empty() {
-                return Err(Error::AuthFailed(format!(
-                    "Credential filed is empty and missing values: {}",
-                    cred
-                )));
-            }
-        } else {
+        if self.state.read().await.as_credentials().is_none() {
             return Err(Error::AuthFailed("Credentials are not set".to_string()));
         }
 
-        let res = self
-            ._post("auth/login")
-            .await?
-            .header(header::REFERER, self.base_url.read().await.to_string())
-            .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(
-                self.state
-                    .read()
-                    .await
-                    .as_credentials()
-                    .unwrap()
-                    .to_string(),
-            )
-            .send()
-            .await?;
+        // if let Some(cred) = self.state.read().await.as_credentials() {
+        //     if cred.is_empty() {
+        //         return Err(Error::AuthFailed(format!(
+        //             "Credential filed is empty and missing values: {}",
+        //             cred
+        //         )));
+        //     }
+        // } else {
+        //     return Err(Error::AuthFailed("Credentials are not set".to_string()));
+        // }
+
+        let res = match self.state.read().await.as_credentials().unwrap() {
+            Credentials::Login(user, pass) => {
+                self._post("auth/login")
+                    .await?
+                    .header(header::REFERER, self.base_url.read().await.to_string())
+                    .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+                    .body(format!("username={user}&password={pass}"))
+                    .send()
+                    .await?
+            }
+            // Credentials::Cookie(cookie) => {}
+            // Credentials::APIKey(key) => {}
+            _ => {
+                return Err(Error::AuthFailed("Credentials are not set".to_string()));
+            }
+        };
 
         if !res.status().is_success() {
             return Err(Error::AuthFailed(format!(
@@ -217,7 +222,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1", credentials)
     ///         .await
     ///         .unwrap();

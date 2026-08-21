@@ -18,7 +18,7 @@
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!     let credentials = Credentials::new("username", "password");
+//!     let credentials = Credentials::Login("username".to_string(), "password".to_string());
 //!     let client = Api::new_login("http://qBittorrent.server:6969", credentials)
 //!         .await
 //!         .unwrap();
@@ -41,11 +41,8 @@ pub mod models;
 /// Parameter objects.
 pub mod parameters;
 
-use std::fmt::Display;
-
 pub use client::Api;
 pub use error::Error;
-use serde::{Deserialize, Serialize};
 
 #[cfg(all(feature = "qBittorrent-5_1", feature = "qBittorrent-5_3"))]
 compile_error!(
@@ -58,7 +55,7 @@ compile_error!(
 ///
 /// Inspired by the design from [George-Miao qbit repo](https://github.com/George-Miao/qbit) -
 /// [Commit](https://github.com/George-Miao/qbit/commit/fe1240c05b4d3feeafb327e8ba7f0eeba97735c5#diff-b1a35a68f14e696205874893c07fd24fdb88882b47c23cc0e0c80a30c7d53759R28)
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub enum LoginState {
     /// The user is logged in.
     LoggedIn {
@@ -93,18 +90,12 @@ impl LoginState {
     }
 
     fn as_credentials(&self) -> Option<&Credentials> {
-        let creds = match self {
+        match self {
             Self::LoggedIn { credentials, .. } => Some(credentials),
             Self::NotLoggedIn { credentials } => Some(credentials),
             Self::CookieProvided { .. } => return None,
             Self::Unknown => return None,
-        };
-
-        if creds.unwrap().is_empty() {
-            return None;
         }
-
-        creds
     }
 
     fn add_cookie(&self, cookie: &str) -> Self {
@@ -127,29 +118,36 @@ impl LoginState {
     }
 }
 
-/// The `Credentials` struct represents a user's login credentials.
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
-pub struct Credentials {
-    username: String,
-    password: String,
+#[derive(Debug, Clone, PartialEq)]
+pub enum Credentials {
+    Login(String, String),
+    APIKey(String),
+    Cookie(String),
 }
 
-impl Credentials {
-    /// Create a new set of credentials with the provided username and password
-    pub fn new(username: impl Into<String>, password: impl Into<String>) -> Self {
-        Self {
-            username: username.into(),
-            password: password.into(),
-        }
-    }
+// The `Credentials` struct represents a user's login credentials.
+// #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
+// pub struct Credentials {
+//     username: String,
+//     password: String,
+// }
 
-    fn is_empty(&self) -> bool {
-        self.username.is_empty() || self.password.is_empty()
-    }
-}
+// impl Credentials {
+//     /// Create a new set of credentials with the provided username and password
+//     pub fn new(username: impl Into<String>, password: impl Into<String>) -> Self {
+//         Self {
+//             username: username.into(),
+//             password: password.into(),
+//         }
+//     }
 
-impl Display for Credentials {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "username={}&password={}", self.username, self.password)
-    }
-}
+//     fn is_empty(&self) -> bool {
+//         self.username.is_empty() || self.password.is_empty()
+//     }
+// }
+
+// impl Display for Credentials {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "username={}&password={}", self.username, self.password)
+//     }
+// }

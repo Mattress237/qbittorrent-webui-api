@@ -22,7 +22,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -58,7 +58,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -92,7 +92,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -126,7 +126,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -157,7 +157,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -192,7 +192,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -231,7 +231,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -267,7 +267,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -312,7 +312,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -346,7 +346,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
