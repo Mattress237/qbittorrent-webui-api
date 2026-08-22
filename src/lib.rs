@@ -32,7 +32,6 @@
 //! ```
 //!
 
-mod auth;
 mod client;
 mod error;
 pub(crate) mod utilities;
@@ -42,8 +41,6 @@ pub mod models;
 /// Parameter objects.
 pub mod parameters;
 
-pub use auth::Credentials;
-pub use auth::LoginState;
 pub use client::Api;
 pub use error::Error;
 
@@ -51,3 +48,31 @@ pub use error::Error;
 compile_error!(
     "Features 'qBittorrent-5_1' and 'qBittorrent-5_3' are not intended to be used together. Please use only one of them."
 );
+
+/// Login state
+///
+/// Represents the authentication state of a user in the system.
+#[derive(Debug)]
+pub struct LoginState {
+    pub credentials: Option<Credentials>,
+    pub sid_cookie: Option<String>,
+}
+
+impl LoginState {
+    pub fn new() -> Self {
+        Self {
+            credentials: None,
+            sid_cookie: None,
+        }
+    }
+}
+
+/// Represents the credentials used for authentication.
+///
+/// This enum holds the credentials for either a username:password or API key authentication.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Credentials {
+    Login(String, String),
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    APIKey(String),
+}

@@ -17,6 +17,7 @@ jobs:
 
       encrypted_password: "@ByteArray(ARQ77eY1NUZaQsuDHbIMCA==:0WMRkYTUWVT9wVvdDtHAjU9b3b7uB8NR1Gur2hmQCvCDpm39Q+PsJRJPaCU51dEiz+dTzh8qbPsL8WkFljQYFQ==)"
       WEBUI_PASSWORD: adminadmin
+      WEBUI_APIKEY: qbt_gGh2ur4FEDzCSwu9gx5QaR89hyuY
 
     steps:
       - name: Install qbittorrent-nox
@@ -34,6 +35,7 @@ jobs:
           WebUI\Username=${{ env.WEBUI_USERNAME }}
           WebUI\Password_PBKDF2="${{ env.encrypted_password }}"
           WebUI\Port=${{ env.WEBUI_PORT }}
+          WebUI\APIKey=${{ env.WEBUI_APIKEY }}
           EOF
 
       - name: Debug version

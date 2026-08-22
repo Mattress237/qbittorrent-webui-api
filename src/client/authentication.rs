@@ -1,6 +1,6 @@
 use reqwest::header::{self};
 
-use crate::{Credentials, LoginState, error::Error};
+use crate::{Credentials, error::Error};
 
 impl super::Api {
     /// Create a new API instance and login to qbittorrent with the provided credentials.
@@ -25,9 +25,7 @@ impl super::Api {
     pub async fn new_login(url: &str, credentials: Credentials) -> Result<Self, Error> {
         let mut api = Self::new(url)?;
 
-        *api.state.write().await = LoginState::NotLoggedIn {
-            credentials: credentials.clone(),
-        };
+        api.state.write().await.credentials = Some(credentials);
 
         api.login(false).await?;
 
@@ -91,8 +89,9 @@ impl super::Api {
     /// }
     /// ```
     pub async fn login(&mut self, force: bool) -> Result<(), Error> {
-        // check if apikey is set
-        if let Some(Credentials::APIKey(_)) = self.state.read().await.as_credentials() {
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        // Check if apikey is set and valid
+        if let Some(Credentials::APIKey(_)) = self.state.read().await.credentials {
             if self.version().await.is_ok() {
                 return Ok(());
             } else {
@@ -101,19 +100,19 @@ impl super::Api {
         }
 
         // check if already login (aka cookie set)
-        if self.state.read().await.as_cookie().is_some() && !force {
+        if self.state.read().await.sid_cookie.is_some() && !force {
             // test if the cookie is valid by calling the version api
             if self.version().await.is_ok() {
                 return Ok(());
             }
         }
 
-        if self.state.read().await.as_credentials().is_none() {
+        if self.state.read().await.credentials.is_none() {
             return Err(Error::AuthFailed("Credentials are not set".to_string()));
         }
 
-        let res = match self.state.read().await.as_credentials().unwrap() {
-            Credentials::Login(user, pass) => {
+        let res = match self.state.read().await.credentials.clone() {
+            Some(Credentials::Login(user, pass)) => {
                 self._post("auth/login")
                     .await?
                     .header(header::REFERER, self.base_url.read().await.to_string())
@@ -122,7 +121,6 @@ impl super::Api {
                     .send()
                     .await?
             }
-            // Credentials::APIKey(key) => {}
             _ => {
                 return Err(Error::AuthFailed("Credentials are not set".to_string()));
             }
@@ -142,7 +140,6 @@ impl super::Api {
             ));
         }
 
-        let mut state = self.state.write().await;
         let cookie = sid
             .unwrap()
             .to_str()
@@ -164,10 +161,7 @@ impl super::Api {
             ));
         }
 
-        *state = LoginState::LoggedIn {
-            credentials: state.as_credentials().unwrap().clone(),
-            cookie_sid: cookie,
-        };
+        self.state.write().await.sid_cookie = Some(cookie);
 
         Ok(())
     }
@@ -234,10 +228,7 @@ impl super::Api {
             .await?
             .error_for_status()?;
 
-        let mut state = self.state.write().await;
-        *state = LoginState::NotLoggedIn {
-            credentials: state.as_credentials().unwrap().clone(),
-        };
+        self.state.write().await.sid_cookie = None;
 
         Ok(())
     }
