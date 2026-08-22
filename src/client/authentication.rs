@@ -91,6 +91,15 @@ impl super::Api {
     /// }
     /// ```
     pub async fn login(&mut self, force: bool) -> Result<(), Error> {
+        // check if apikey is set
+        if let Some(Credentials::APIKey(_)) = self.state.read().await.as_credentials() {
+            if self.version().await.is_ok() {
+                return Ok(());
+            } else {
+                return Err(Error::AuthFailed("API key is invalid".to_string()));
+            }
+        }
+
         // check if already login (aka cookie set)
         if self.state.read().await.as_cookie().is_some() && !force {
             // test if the cookie is valid by calling the version api
@@ -103,17 +112,6 @@ impl super::Api {
             return Err(Error::AuthFailed("Credentials are not set".to_string()));
         }
 
-        // if let Some(cred) = self.state.read().await.as_credentials() {
-        //     if cred.is_empty() {
-        //         return Err(Error::AuthFailed(format!(
-        //             "Credential filed is empty and missing values: {}",
-        //             cred
-        //         )));
-        //     }
-        // } else {
-        //     return Err(Error::AuthFailed("Credentials are not set".to_string()));
-        // }
-
         let res = match self.state.read().await.as_credentials().unwrap() {
             Credentials::Login(user, pass) => {
                 self._post("auth/login")
@@ -124,7 +122,6 @@ impl super::Api {
                     .send()
                     .await?
             }
-            // Credentials::Cookie(cookie) => {}
             // Credentials::APIKey(key) => {}
             _ => {
                 return Err(Error::AuthFailed("Credentials are not set".to_string()));

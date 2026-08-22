@@ -71,32 +71,4 @@ impl LoginState {
 pub enum Credentials {
     Login(String, String),
     APIKey(String),
-    Cookie(String),
 }
-
-// The `Credentials` struct represents a user's login credentials.
-// #[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq)]
-// pub struct Credentials {
-//     username: String,
-//     password: String,
-// }
-
-// impl Credentials {
-//     /// Create a new set of credentials with the provided username and password
-//     pub fn new(username: impl Into<String>, password: impl Into<String>) -> Self {
-//         Self {
-//             username: username.into(),
-//             password: password.into(),
-//         }
-//     }
-
-//     fn is_empty(&self) -> bool {
-//         self.username.is_empty() || self.password.is_empty()
-//     }
-// }
-
-// impl Display for Credentials {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "username={}&password={}", self.username, self.password)
-//     }
-// }

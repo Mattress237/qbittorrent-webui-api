@@ -6,7 +6,7 @@ use reqwest::{
     header::{self, HeaderMap},
 };
 
-use crate::{LoginState, error::Error};
+use crate::{Credentials, LoginState, error::Error};
 
 mod application;
 mod authentication;
@@ -63,7 +63,12 @@ impl Api {
 
     async fn _post(&self, endpoint: &str) -> Result<RequestBuilder, Error> {
         let mut header_map = HeaderMap::new();
-        if let Some(cookie) = self.state.read().await.as_cookie() {
+        if let Some(Credentials::APIKey(key)) = self.state.read().await.as_credentials() {
+            header_map.insert(
+                header::AUTHORIZATION,
+                format!("Bearer {}", key).parse().unwrap(),
+            );
+        } else if let Some(cookie) = self.state.read().await.as_cookie() {
             let cookie = format!("{}; HttpOnly; SameSite=Strict; path=/", cookie);
             header_map.insert(header::COOKIE, cookie.parse().unwrap());
         }
@@ -77,7 +82,12 @@ impl Api {
 
     async fn _get(&self, endpoint: &str) -> Result<RequestBuilder, Error> {
         let mut header_map = HeaderMap::new();
-        if let Some(cookie) = self.state.read().await.as_cookie() {
+        if let Some(Credentials::APIKey(key)) = self.state.read().await.as_credentials() {
+            header_map.insert(
+                header::AUTHORIZATION,
+                format!("Bearer {}", key).parse().unwrap(),
+            );
+        } else if let Some(cookie) = self.state.read().await.as_cookie() {
             let cookie = format!("{}; HttpOnly; SameSite=Strict; path=/", cookie);
             header_map.insert(header::COOKIE, cookie.parse().unwrap());
         }
