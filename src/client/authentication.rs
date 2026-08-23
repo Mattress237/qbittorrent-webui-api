@@ -1,6 +1,6 @@
 use reqwest::header::{self};
 
-use crate::{Credentials, LoginState, error::Error};
+use crate::{Credentials, error::Error};
 
 impl super::Api {
     /// Create a new API instance and login to qbittorrent with the provided credentials.
@@ -16,7 +16,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -25,9 +25,7 @@ impl super::Api {
     pub async fn new_login(url: &str, credentials: Credentials) -> Result<Self, Error> {
         let mut api = Self::new(url)?;
 
-        *api.state.write().await = LoginState::NotLoggedIn {
-            credentials: credentials.clone(),
-        };
+        api.state.write().await.credentials = Some(credentials);
 
         api.login(false).await?;
 
@@ -58,7 +56,7 @@ impl super::Api {
         username: impl Into<String>,
         password: impl Into<String>,
     ) -> Result<Self, Error> {
-        let credentials = Credentials::new(username, password);
+        let credentials = Credentials::Login(username.into(), password.into());
 
         Self::new_login(url, credentials).await
     }
@@ -81,7 +79,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let mut client = Api::new_login("http://127.0.0.1/", credentials)
     ///         .await
     ///         .unwrap();
@@ -91,40 +89,43 @@ impl super::Api {
     /// }
     /// ```
     pub async fn login(&mut self, force: bool) -> Result<(), Error> {
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        // [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
+        // Check if apikey is set and valid
+        if let Some(Credentials::APIKey(_)) = self.state.read().await.credentials {
+            if self.version().await.is_ok() {
+                return Ok(());
+            } else {
+                return Err(Error::AuthFailed("API key is invalid".to_string()));
+            }
+        }
+
         // check if already login (aka cookie set)
-        if self.state.read().await.as_cookie().is_some() && !force {
+        if self.state.read().await.sid_cookie.is_some() && !force {
             // test if the cookie is valid by calling the version api
             if self.version().await.is_ok() {
                 return Ok(());
             }
         }
 
-        if let Some(cred) = self.state.read().await.as_credentials() {
-            if cred.is_empty() {
-                return Err(Error::AuthFailed(format!(
-                    "Credential filed is empty and missing values: {}",
-                    cred
-                )));
-            }
-        } else {
+        if self.state.read().await.credentials.is_none() {
             return Err(Error::AuthFailed("Credentials are not set".to_string()));
         }
 
-        let res = self
-            ._post("auth/login")
-            .await?
-            .header(header::REFERER, self.base_url.read().await.to_string())
-            .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
-            .body(
-                self.state
-                    .read()
-                    .await
-                    .as_credentials()
-                    .unwrap()
-                    .to_string(),
-            )
-            .send()
-            .await?;
+        let res = match self.state.read().await.credentials.clone() {
+            Some(Credentials::Login(user, pass)) => {
+                self._post("auth/login")
+                    .await?
+                    .header(header::REFERER, self.base_url.read().await.to_string())
+                    .header(header::CONTENT_TYPE, "application/x-www-form-urlencoded")
+                    .body(format!("username={user}&password={pass}"))
+                    .send()
+                    .await?
+            }
+            _ => {
+                return Err(Error::AuthFailed("Credentials are not set".to_string()));
+            }
+        };
 
         if !res.status().is_success() {
             return Err(Error::AuthFailed(format!(
@@ -140,7 +141,6 @@ impl super::Api {
             ));
         }
 
-        let mut state = self.state.write().await;
         let cookie = sid
             .unwrap()
             .to_str()
@@ -162,10 +162,7 @@ impl super::Api {
             ));
         }
 
-        *state = LoginState::LoggedIn {
-            credentials: state.as_credentials().unwrap().clone(),
-            cookie_sid: cookie,
-        };
+        self.state.write().await.sid_cookie = Some(cookie);
 
         Ok(())
     }
@@ -217,7 +214,7 @@ impl super::Api {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let credentials = Credentials::new("username", "password");
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
     ///     let client = Api::new_login("http://127.0.0.1", credentials)
     ///         .await
     ///         .unwrap();
@@ -232,10 +229,7 @@ impl super::Api {
             .await?
             .error_for_status()?;
 
-        let mut state = self.state.write().await;
-        *state = LoginState::NotLoggedIn {
-            credentials: state.as_credentials().unwrap().clone(),
-        };
+        self.state.write().await.sid_cookie = None;
 
         Ok(())
     }

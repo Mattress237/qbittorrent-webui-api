@@ -49,6 +49,19 @@ pub fn get_server_password() -> String {
     env::var("WEBUI_PASSWORD").unwrap_or("adminadmin".to_string())
 }
 
+pub fn get_server_api_key() -> String {
+    dotenv().ok();
+    let api_key = env::var("WEBUI_APIKEY").unwrap_or("".to_string());
+    if api_key.is_empty() {
+        panic!("WEBUI_API_KEY is not set in the environment");
+    }
+    if api_key == "qbt_1111111111111111111111111111" {
+        panic!("WEBUI_API_KEY is set to the default value. Update it in the environment.");
+    }
+
+    api_key
+}
+
 pub async fn login_default_client() -> Api {
     Api::new_login_username_password(
         &get_server_details(),

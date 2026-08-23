@@ -1,11 +1,11 @@
 use core::str;
 use url::{self, Url};
 
-use reqwest::{
-    Client as ReqwestClient, RequestBuilder,
-    header::{self, HeaderMap},
-};
+use reqwest::{Client as ReqwestClient, RequestBuilder, header};
 
+#[cfg(not(feature = "qBittorrent-5_1"))]
+// [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
+use crate::Credentials;
 use crate::{LoginState, error::Error};
 
 mod application;
@@ -32,7 +32,7 @@ impl Api {
         Ok(Self {
             http_client: ReqwestClient::new(),
             base_url: tokio::sync::RwLock::new(Url::parse(&url.into())?),
-            state: tokio::sync::RwLock::new(LoginState::Unknown),
+            state: tokio::sync::RwLock::new(LoginState::new()),
         })
     }
 
@@ -46,47 +46,45 @@ impl Api {
 
     /// Returns the current session identifier cookie (if it exists).
     pub async fn get_sid_cookie(&self) -> Option<String> {
-        self.state.read().await.as_cookie()
+        self.state.read().await.sid_cookie.clone()
     }
 
     /// Sets the current session identifier cookie.
     ///
     /// This will also change the state of the client.
     pub async fn set_sid_cookie(&mut self, value: impl Into<&str>) -> Result<(), Error> {
-        let new_state = self.state.read().await.add_cookie(value.into());
-
-        let mut old_state = self.state.write().await;
-        *old_state = new_state;
+        self.state.write().await.sid_cookie = Some(value.into().to_string());
 
         Ok(())
     }
 
     async fn _post(&self, endpoint: &str) -> Result<RequestBuilder, Error> {
-        let mut header_map = HeaderMap::new();
-        if let Some(cookie) = self.state.read().await.as_cookie() {
-            let cookie = format!("{}; HttpOnly; SameSite=Strict; path=/", cookie);
-            header_map.insert(header::COOKIE, cookie.parse().unwrap());
-        }
-
         let url = self._build_url(endpoint).await?;
 
-        let builder = self.http_client.post(url).headers(header_map);
+        let builder = self._insert_auth(self.http_client.post(url)).await;
 
         Ok(builder)
     }
 
     async fn _get(&self, endpoint: &str) -> Result<RequestBuilder, Error> {
-        let mut header_map = HeaderMap::new();
-        if let Some(cookie) = self.state.read().await.as_cookie() {
-            let cookie = format!("{}; HttpOnly; SameSite=Strict; path=/", cookie);
-            header_map.insert(header::COOKIE, cookie.parse().unwrap());
-        }
-
         let url = self._build_url(endpoint).await?;
 
-        let builder = self.http_client.get(url).headers(header_map);
+        let builder = self._insert_auth(self.http_client.get(url)).await;
 
         Ok(builder)
+    }
+
+    async fn _insert_auth(&self, builder: RequestBuilder) -> RequestBuilder {
+        #[cfg(not(feature = "qBittorrent-5_1"))]
+        // [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
+        if let Some(Credentials::APIKey(key)) = self.state.read().await.credentials.clone() {
+            return builder.header(header::AUTHORIZATION, format!("Bearer {}", key));
+        }
+        if let Some(cookie) = self.state.read().await.sid_cookie.clone() {
+            let cookie = format!("{}; HttpOnly; SameSite=Strict; path=/", cookie);
+            return builder.header(header::COOKIE, cookie);
+        }
+        builder
     }
 }
 
