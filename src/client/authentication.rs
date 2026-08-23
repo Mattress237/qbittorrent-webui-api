@@ -90,6 +90,7 @@ impl super::Api {
     /// ```
     pub async fn login(&mut self, force: bool) -> Result<(), Error> {
         #[cfg(not(feature = "qBittorrent-5_1"))]
+        // [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
         // Check if apikey is set and valid
         if let Some(Credentials::APIKey(_)) = self.state.read().await.credentials {
             if self.version().await.is_ok() {

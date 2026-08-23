@@ -336,6 +336,96 @@ impl super::Api {
         Ok(())
     }
 
+    /// Rotate the API key for the application.
+    ///
+    /// It rotates the API key for the application and returns the new key.
+    /// It will also update the internal state with the new key if `set_state`
+    /// is `true`,so that future requests will use the new key. It will
+    /// overwrite the old credentials even if it is username/password
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use qbit::{Api, Credentials};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
+    ///         .await
+    ///         .unwrap();
+    ///
+    ///     let result = client.rotate_api_key(true).await;
+    ///
+    ///     assert!(result.is_ok());
+    /// }
+    /// ```
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    // [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
+    pub async fn rotate_api_key(&self, set_state: bool) -> Result<String, Error> {
+        use crate::Credentials;
+
+        #[derive(serde::Deserialize)]
+        struct RotateApiKeyResponse {
+            #[serde(rename = "apiKey")]
+            key: String,
+        }
+
+        let response: RotateApiKeyResponse = self
+            ._post("app/rotateAPIKey")
+            .await?
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
+
+        let key = response.key;
+
+        if set_state {
+            self.state.write().await.credentials = Some(Credentials::APIKey(key.clone()));
+        }
+
+        Ok(key)
+    }
+
+    /// Delete the API key.
+    ///
+    /// It is recommended to set `set_state` to `true` to clear the credentials
+    /// from the state.
+    ///
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use qbit::{Api, Credentials};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let credentials = Credentials::Login("username".to_string(), "password".to_string());
+    ///     let client = Api::new_login("http://127.0.0.1/", credentials)
+    ///         .await
+    ///         .unwrap();
+    ///
+    ///     let result = client.delete_api_key(true).await;
+    ///
+    ///     assert!(result.is_ok());
+    /// }
+    /// ```
+    #[cfg(not(feature = "qBittorrent-5_1"))]
+    // [pr 23388](https://github.com/qbittorrent/qBittorrent/pull/23388)
+    pub async fn delete_api_key(&self, set_state: bool) -> Result<(), Error> {
+        self._post("app/deleteAPIKey")
+            .await?
+            .send()
+            .await?
+            .error_for_status()?;
+
+        if set_state {
+            self.state.write().await.credentials = None;
+        }
+
+        Ok(())
+    }
+
     /// List the contents of the directory. (Yes this is an endpoint)
     ///
     /// # Example

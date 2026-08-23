@@ -3,7 +3,10 @@ use url::{self, Url};
 
 use reqwest::{Client as ReqwestClient, RequestBuilder, header};
 
-use crate::{Credentials, LoginState, error::Error};
+#[cfg(not(feature = "qBittorrent-5_1"))]
+// [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
+use crate::Credentials;
+use crate::{LoginState, error::Error};
 
 mod application;
 mod authentication;
@@ -73,6 +76,7 @@ impl Api {
 
     async fn _insert_auth(&self, builder: RequestBuilder) -> RequestBuilder {
         #[cfg(not(feature = "qBittorrent-5_1"))]
+        // [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
         if let Some(Credentials::APIKey(key)) = self.state.read().await.credentials.clone() {
             return builder.header(header::AUTHORIZATION, format!("Bearer {}", key));
         }

@@ -74,5 +74,6 @@ impl LoginState {
 pub enum Credentials {
     Login(String, String),
     #[cfg(not(feature = "qBittorrent-5_1"))]
+    // [pr 23212](https://github.com/qbittorrent/qBittorrent/pull/23212)
     APIKey(String),
 }
