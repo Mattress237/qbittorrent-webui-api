@@ -28,8 +28,8 @@ qbit = "0.2"
 use qbit::API;
 use qbit::Credentials;
 
-let cred = Credentials::new("username", "secret_password");
-let client = API::new_login("http://qBittorrent.server:6969", cred).await.unwrap();
+let credentials = Credentials::Login("username".to_string(), "password".to_string());
+let mut client = Api::new_login("http://127.0.0.1/", credentials).await.unwrap();
 
 let torrents = client.torrents(None).await.unwrap();
 ```
