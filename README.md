@@ -7,7 +7,9 @@
 
 Asynchronous Rust wrapper for Qbittorrent Web API, supporting all documented endpoints.
 
-Supported Qbittorrent versions: `>=5.2.0`, `>=5.1.2`
+# Supported Qbittorrent versions
+
+Supported Qbittorrent versions: `>=5.2.0`, `>=5.1.2` (with feature flag `qBittorrent-5_1`)
 This is the lowest tested versions.
 
 # Usage
@@ -20,8 +22,21 @@ cargo add qbit
 Add it manually in your `Cargo.toml`:
 ``` toml
 [dependencies]
-qbit = "0.2"
+qbit = "0.3"
 ```
+
+## Feature flags
+Leaving feature flags unset will default to Qbittorrent `5.2`
+
+For backwards compatibility, and future-proofing, two feature flags are 
+available: `qBittorrent-5_3` and `qBittorrent-5_1`.
+
+Enabling `qBittorrent-5_1` will expect the server to be running Qbittorrent 
+`5.1`, while `qBittorrent-5_3` will expect the server to be running a prerelease 
+version of `5.3`. 
+
+`qBittorrent-5_3` should be expected to be experimental and may 
+be unstable as it is in active development.
 
 ## Basic usage to get all torrents:
 ``` rust
@@ -53,6 +68,7 @@ WEBUI_URL="http://localhost" \
 WEBUI_PORT="6969" \
 WEBUI_USERNAME="admin" \
 WEBUI_PASSWORD="adminadmin" \
+WEBUI_APIKEY="<APIKEY>" \
 TEMP_DIR=".temp" \
 SERVER_TEMP_DIR=".temp" \
 cargo test -- --include-ignored
